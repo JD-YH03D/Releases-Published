@@ -1,6 +1,6 @@
 # Bintang Toba Pro
 
-**Version:** 1.0.0  
+**Version:** 1.7.1  
 **License:** MIT  
 **Platform:** Tampermonkey / Greasemonkey Userscript
 
