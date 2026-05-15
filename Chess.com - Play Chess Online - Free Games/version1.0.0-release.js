@@ -16,7 +16,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @resource     stockfishjs  https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js
-// @resource     openingbook  https://raw.githubusercontent.com/Delta-Polder-Indonesia/Egine-chess-tempermonkey-pro/refs/heads/main/opening-book.JSON
+// @resource     openingbook  https://raw.githubusercontent.com/JD-YH03D/release/refs/heads/main/Chess.com%20-%20Play%20Chess%20Online%20-%20Free%20Games/OpeningBook.json
 // @connect      localhost
 // @connect      cdnjs.cloudflare.com
 // @connect      unpkg.com
@@ -523,7 +523,7 @@
         try {
             GM_xmlhttpRequest({
                 method: "GET",
-                url: "https://raw.githubusercontent.com/Delta-Polder-Indonesia/Egine-chess-tempermonkey-pro/refs/heads/main/opening-book.JSON",
+                url: "https://raw.githubusercontent.com/JD-YH03D/release/refs/heads/main/Chess.com%20-%20Play%20Chess%20Online%20-%20Free%20Games/OpeningBook.json",
                 timeout: 8000,
                 onload: function (r) {
                     _openingBookLoadState.inFlight = false;
