@@ -1,9 +1,11 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/JD-YH03D/release/main/public/image/hero.png" 
-     alt="Bintang Toba Pro Hero Image">
+<img src="https://static.wikia.nocookie.net/logopedia/images/3/32/Chess.com_2012.png/revision/latest?cb=20221006102754" 
+     alt="Bintang Toba Pro Hero Image"
+     width="70%">
 
 # 🏆 Bintang Toba Pro - Chess.com Assistant
+
 </div>
 
 **Version:** 1.0.0  
