@@ -1,6 +1,7 @@
 <div align="center">
 
-![bintang toba](public/image/hero.png)
+<img src="https://www.seriouslyfreshmedia.com/wp-content/uploads/2016/06/cherrymedia-cherrysauce-geoguessr-1.jpg" 
+     alt="Bintang Toba Pro Hero Image">
 
 <h1> Bintang Toba Pro</h1>
 </div>
