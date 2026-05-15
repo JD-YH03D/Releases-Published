@@ -1,4 +1,10 @@
-# Greasy Fork Scripts - JD-YH03D
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/JD-YH03D/release/main/public/image/hero.png" 
+     alt="Bintang Toba Pro Hero Image">
+
+# Greasy Fork Scripts - Bintang Toba Pro
+</div>
 
 Welcome to the official repository for Greasy Fork scripts maintained by [JD-YH03D](https://github.com/JD-YH03D). This repository serves as the primary source for various user scripts designed to enhance your web browsing experience.
 
@@ -42,5 +48,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-- GitHub: [JD-YH03D](https://github.com/JD-YH03D)
-- Greasy Fork: [JD-YH03D Profile](https://greasyfork.org/id/users/1575724-qwerty-1)
+- GitHub: [Bintang Toba Pro](https://github.com/JD-YH03D)
+- Greasy Fork: [Bintang Toba Pro Profile](https://greasyfork.org/id/users/1575724-qwerty-1)
