@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,26 +11,30 @@
 
         :root {
             --bg-main: #020617;
+            --accent-blue: #3b82f6;
+            --glass-bg: rgba(15, 23, 42, 0.6);
         }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-main);
             color: #e2e8f0;
+            line-height: 1.6;
         }
 
         .mono { font-family: 'JetBrains Mono', monospace; }
 
         .glass-card {
-            background: rgba(15, 23, 42, 0.6);
+            background: var(--glass-bg);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .glass-card:hover {
             border-color: rgba(59, 130, 246, 0.3);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.5);
         }
 
         .gradient-text {
@@ -51,12 +55,12 @@
 
         #modal-overlay.active {
             display: flex;
-            animation: fadeIn 0.2s ease-out;
+            animation: fadeIn 0.2s ease-out forwards;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         .kbd-capsule {
@@ -64,173 +68,155 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 2px 8px;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 10px;
             color: #60a5fa;
             box-shadow: 0 2px 0 rgba(0,0,0,0.3);
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
     </style>
 </head>
-<body class="bg-grid">
+<body class="bg-grid selection:bg-blue-500/30">
 
-    <!-- Modal -->
-    <div id="modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-6">
-        <div class="glass-card max-w-2xl w-full rounded-xl overflow-hidden shadow-2xl">
+    <!-- Modal Controls -->
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 md:p-6">
+        <div class="glass-card max-w-2xl w-full rounded-2xl overflow-hidden shadow-2xl">
             <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
                     <i class="fas fa-keyboard text-emerald-400 text-sm"></i>
-                    <h3 class="font-semibold text-white text-sm tracking-wide">GeoGuessr Controls</h3>
+                    <h3 class="font-semibold text-white text-sm tracking-wide uppercase">GeoGuessr Controls</h3>
                 </div>
-                <button onclick="closeModal()" class="text-slate-500 hover:text-white transition">
-                    <i class="fas fa-times text-sm"></i>
+                <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-800 text-slate-500 hover:text-white transition">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="p-5">
-                <div class="overflow-hidden border border-slate-800 rounded-lg">
+            <div class="p-5 max-h-[70vh] overflow-y-auto">
+                <div class="overflow-hidden border border-slate-800 rounded-xl">
                     <table class="w-full text-left text-xs mono">
                         <thead class="bg-slate-900/50 text-slate-500">
                             <tr>
-                                <th class="px-4 py-3 font-medium text-[11px] uppercase tracking-wider border-b border-slate-800">Key</th>
-                                <th class="px-4 py-3 font-medium text-[11px] uppercase tracking-wider border-b border-slate-800">Function</th>
-                                <th class="px-4 py-3 font-medium text-[11px] uppercase tracking-wider border-b border-slate-800">Description</th>
+                                <th class="px-4 py-3 font-semibold uppercase border-b border-slate-800">Key</th>
+                                <th class="px-4 py-3 font-semibold uppercase border-b border-slate-800">Function</th>
+                                <th class="px-4 py-3 font-semibold uppercase border-b border-slate-800 hidden sm:table-cell">Description</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/50 text-slate-300">
                             <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">Tab</span></td>
-                                <td class="px-4 py-2.5 text-white">Settings</td>
-                                <td class="px-4 py-2.5 text-slate-500">Open/close settings panel</td>
+                                <td class="px-4 py-3"><span class="kbd-capsule">Tab</span></td>
+                                <td class="px-4 py-3 text-white">Settings</td>
+                                <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">Open/close settings panel</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">V</span></td>
-                                <td class="px-4 py-2.5 text-white">Info Panel</td>
-                                <td class="px-4 py-2.5 text-slate-500">Toggle location info</td>
+                                <td class="px-4 py-3"><span class="kbd-capsule">V</span></td>
+                                <td class="px-4 py-3 text-white">Info Panel</td>
+                                <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">Toggle location info</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">M</span></td>
-                                <td class="px-4 py-2.5 text-white">Manual Marker</td>
-                                <td class="px-4 py-2.5 text-slate-500">Place marker on map</td>
+                                <td class="px-4 py-3"><span class="kbd-capsule">1</span></td>
+                                <td class="px-4 py-3 text-emerald-400 font-medium">Auto Place</td>
+                                <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">Exact position marker</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">X</span></td>
-                                <td class="px-4 py-2.5 text-white">Refresh</td>
-                                <td class="px-4 py-2.5 text-slate-500">Reset for next round</td>
+                                <td class="px-4 py-3"><span class="kbd-capsule">C</span></td>
+                                <td class="px-4 py-3 text-white">Copy Coords</td>
+                                <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">Copy to clipboard</td>
                             </tr>
                             <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">1</span></td>
-                                <td class="px-4 py-2.5 text-emerald-400 font-medium">Auto Place</td>
-                                <td class="px-4 py-2.5 text-slate-500">Exact position marker</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">2</span></td>
-                                <td class="px-4 py-2.5 text-white">Safe Place</td>
-                                <td class="px-4 py-2.5 text-slate-500">Marker with offset</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">S</span></td>
-                                <td class="px-4 py-2.5 text-white">Zoom In</td>
-                                <td class="px-4 py-2.5 text-slate-500">Increase map zoom</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">A</span></td>
-                                <td class="px-4 py-2.5 text-white">Zoom Out</td>
-                                <td class="px-4 py-2.5 text-slate-500">Decrease map zoom</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">C</span></td>
-                                <td class="px-4 py-2.5 text-white">Copy Coords</td>
-                                <td class="px-4 py-2.5 text-slate-500">Copy to clipboard</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">G</span></td>
-                                <td class="px-4 py-2.5 text-white">Google Maps</td>
-                                <td class="px-4 py-2.5 text-slate-500">Open in Google Maps</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-2.5"><span class="kbd-capsule">D</span></td>
-                                <td class="px-4 py-2.5 text-white">Discord</td>
-                                <td class="px-4 py-2.5 text-slate-500">Send to webhook</td>
+                                <td class="px-4 py-3"><span class="kbd-capsule">G</span></td>
+                                <td class="px-4 py-3 text-white">Google Maps</td>
+                                <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">Open in Google Maps</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-5 flex justify-end">
-                    <button onclick="closeModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md text-xs font-semibold transition">Close</button>
-                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-900/30 border-t border-slate-800 flex justify-end">
+                <button onclick="closeModal()" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition">Tutup</button>
             </div>
         </div>
     </div>
 
-    <!-- Header -->
+    <!-- Navigation -->
     <header class="border-b border-slate-800/50 bg-slate-950/80 sticky top-0 z-50 backdrop-blur-xl">
-        <div class="container mx-auto px-6 py-3.5 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="h-8 w-8 bg-blue-600 rounded flex items-center justify-center">
-                    <i class="fas fa-terminal text-xs text-white"></i>
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <div class="relative group cursor-pointer">
+                    <div class="absolute inset-0 bg-blue-500/30 blur-lg rounded-xl opacity-0 group-hover:opacity-100 transition"></div>
+                    <div class="relative h-10 w-10 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-inner">
+                        <img src="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/main/public/image/hero1.png" alt="JD-YH03D" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/40x40/0f172a/60a5fa?text=JD'">
+                    </div>
                 </div>
-                <div class="flex flex-col">
-                    <span class="text-sm font-bold tracking-wider text-white">JD-YH03D</span>
-                    <span class="text-[10px] text-slate-500 mono">Scripts Repository</span>
+                <div class="flex flex-col leading-tight">
+                    <span class="text-base font-bold tracking-tight text-white">JD-YH03D</span>
+                    <span class="text-[10px] text-slate-500 mono uppercase tracking-widest">Scripts Hub</span>
                 </div>
             </div>
-            <nav class="hidden md:flex items-center space-x-8 text-[13px] font-medium">
+            
+            <nav class="hidden md:flex items-center space-x-8 text-xs font-semibold uppercase tracking-wider">
                 <a href="#directory" class="text-slate-400 hover:text-blue-400 transition">Directory</a>
                 <a href="#documentation" class="text-slate-400 hover:text-blue-400 transition">Docs</a>
                 <a href="https://github.com/JD-YH03D/Releases-Published/issues" target="_blank" class="text-slate-400 hover:text-red-400 transition flex items-center">
-                    <i class="fas fa-circle-exclamation mr-1.5 text-[10px]"></i>Issues
+                    <i class="fas fa-circle-exclamation mr-1.5 opacity-70"></i>Issues
                 </a>
-                <a href="https://github.com/JD-YH03D" target="_blank" class="text-slate-400 hover:text-white transition flex items-center">
-                    <i class="fab fa-github mr-1.5"></i>GitHub
+                <a href="https://github.com/JD-YH03D/Releases-Published" target="_blank" class="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10 text-white transition flex items-center">
+                    <i class="fab fa-github mr-2"></i>GitHub
                 </a>
             </nav>
+
+            <button class="md:hidden text-slate-400"><i class="fas fa-bars"></i></button>
         </div>
     </header>
 
-    <main class="container mx-auto px-6">
-
-        <!-- Hero -->
-        <section class="py-20 flex flex-col md:flex-row items-center gap-14 border-b border-slate-900">
-            <div class="md:w-3/5">
-                <div class="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full mb-5">
-                    <span class="relative flex h-1.5 w-1.5">
+    <main class="container mx-auto px-6 max-w-6xl">
+        <!-- Hero Section -->
+        <section class="py-16 md:py-24 flex flex-col md:flex-row items-center gap-16">
+            <div class="flex-1 text-center md:text-left">
+                <div class="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full mb-6">
+                    <span class="relative flex h-2 w-2">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                     </span>
-                    <span class="text-[10px] font-semibold text-blue-400 uppercase tracking-wider">v2.4.0 Live</span>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Version 2.4.0 Production Live</span>
                 </div>
-                <h2 class="text-4xl md:text-5xl font-bold mb-6 leading-tight gradient-text tracking-tight">
+                <h1 class="text-4xl md:text-6xl font-black mb-6 leading-[1.1] gradient-text tracking-tight">
                     Web Automation<br><span class="text-blue-500">Script Engine</span>
-                </h2>
-                <p class="text-slate-400 text-base mb-8 max-w-lg leading-relaxed">
-                    Centralized repository for production-grade UserScripts. Built for performance, stability, and seamless browser integration.
+                </h1>
+                <p class="text-slate-400 text-lg mb-10 max-w-xl leading-relaxed mx-auto md:mx-0">
+                    Pusat repositori UserScripts berkualitas tinggi. Dirancang untuk performa maksimal, stabilitas, dan integrasi browser yang mulus.
                 </p>
-                <div class="flex flex-wrap gap-4">
-                    <a href="#directory" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition hover:opacity-90 flex items-center text-sm">
-                        Explore Scripts <i class="fas fa-chevron-right ml-2 text-[10px]"></i>
+                <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+                    <a href="#directory" class="btn-primary text-white px-8 py-3.5 rounded-xl font-bold transition hover:scale-[1.02] active:scale-95 flex items-center shadow-lg">
+                        Explore Scripts <i class="fas fa-arrow-right ml-3 text-xs opacity-70"></i>
                     </a>
-                    <a href="#documentation" class="bg-slate-900 hover:bg-slate-800 text-slate-300 px-6 py-3 rounded-lg font-semibold transition border border-slate-800 text-sm">
+                    <a href="#documentation" class="bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-slate-300 px-8 py-3.5 rounded-xl font-bold transition border border-slate-800">
                         Documentation
                     </a>
                 </div>
             </div>
-            <div class="md:w-2/5 hidden md:block">
+            
+            <div class="flex-1 w-full max-w-lg hidden lg:block">
                 <div class="relative group">
-                    <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 rounded-xl blur opacity-40 group-hover:opacity-60 transition duration-700"></div>
-                    <div class="relative bg-slate-950 border border-slate-800 p-6 rounded-xl">
-                        <div class="flex justify-between items-center mb-5">
-                            <div class="flex space-x-1.5">
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+                    <div class="absolute -inset-1 bg-gradient-to-r from-blue-600/30 to-purple-600/30 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition duration-1000"></div>
+                    <div class="relative bg-slate-950/90 border border-slate-800 p-6 rounded-2xl shadow-2xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/30"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/30"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/30"></div>
                             </div>
-                            <span class="text-[10px] text-slate-600 mono">status: nominal</span>
+                            <span class="text-[10px] text-slate-600 mono uppercase tracking-widest">engine_status: stable</span>
                         </div>
-                        <div class="space-y-3">
-                            <div class="h-2 w-3/4 bg-slate-900 rounded"></div>
-                            <div class="h-2 w-full bg-slate-900 rounded"></div>
-                            <div class="h-2 w-5/6 bg-slate-900 rounded"></div>
-                            <div class="flex gap-2 pt-3">
-                                <div class="h-7 w-10 bg-blue-500/15 border border-blue-500/25 rounded"></div>
-                                <div class="h-7 w-20 bg-slate-900 rounded"></div>
+                        <div class="space-y-4">
+                            <div class="h-2.5 w-3/4 bg-slate-800/50 rounded-full animate-pulse"></div>
+                            <div class="h-2.5 w-full bg-slate-800/50 rounded-full"></div>
+                            <div class="h-2.5 w-5/6 bg-slate-800/50 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                            <div class="flex gap-3 pt-4">
+                                <div class="h-8 w-12 bg-blue-500/10 border border-blue-500/20 rounded-lg"></div>
+                                <div class="h-8 w-24 bg-slate-800/50 rounded-lg"></div>
                             </div>
                         </div>
                     </div>
@@ -238,64 +224,64 @@
             </div>
         </section>
 
-        <!-- Directory -->
-        <section id="directory" class="py-20">
-            <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+        <!-- Directory Section -->
+        <section id="directory" class="py-20 border-t border-slate-900">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
                 <div>
-                    <h3 class="text-2xl font-bold text-white mb-1.5 tracking-tight">Active Directory</h3>
-                    <p class="text-slate-500 text-sm">Official script releases and production builds.</p>
+                    <h2 class="text-3xl font-extrabold text-white mb-2 tracking-tight">Active Directory</h2>
+                    <p class="text-slate-500 text-sm">Repositori resmi skrip dan build produksi.</p>
                 </div>
-                <div class="flex bg-slate-900/50 p-1 rounded-lg border border-slate-800">
-                    <button class="px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-800 rounded">Production</button>
-                    <button class="px-3.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-300 transition">Legacy</button>
+                <div class="flex bg-slate-900/50 p-1.5 rounded-xl border border-slate-800 w-fit">
+                    <button class="px-5 py-2 text-xs font-bold text-white bg-blue-600 rounded-lg shadow-lg">Production</button>
+                    <button class="px-5 py-2 text-xs font-bold text-slate-500 hover:text-slate-300 transition">Legacy</button>
                 </div>
             </div>
 
-            <div class="space-y-8">
-
-                <!-- GeoGuessr -->
-                <div class="glass-card rounded-xl overflow-hidden">
-                    <div class="bg-slate-900/40 px-5 py-3.5 border-b border-slate-800/50 flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-emerald-500/10 p-1.5 rounded-lg border border-emerald-500/20">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="10" stroke="#10b981" stroke-width="1.5" fill="none"/>
-                                    <path d="M2 12h20" stroke="#10b981" stroke-width="1.2"/>
-                                    <path d="M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10" stroke="#10b981" stroke-width="1.2" fill="none"/>
-                                    <path d="M12 2c-2.5 3-4 6.5-4 10s1.5 7 4 10" stroke="#10b981" stroke-width="1.2" fill="none"/>
-                                </svg>
+            <div class="grid grid-cols-1 gap-10">
+                <!-- GeoGuessr Card -->
+                <div class="glass-card rounded-2xl overflow-hidden group">
+                    <div class="bg-slate-900/60 px-6 py-5 border-b border-slate-800/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="relative w-12 h-12 flex-shrink-0">
+                                <div class="absolute inset-0 bg-emerald-500/20 blur-lg rounded-xl opacity-0 group-hover:opacity-100 transition"></div>
+                                <div class="relative w-12 h-12 rounded-xl overflow-hidden border border-emerald-500/30 bg-slate-900">
+                                    <img src="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/main/public/image/geoguessr.jpg" alt="GeoGuessr" class="w-full h-full object-cover">
+                                </div>
                             </div>
-                            <h4 class="font-semibold text-white text-sm">GeoGuessr - Let's explore the world!</h4>
+                            <div>
+                                <h4 class="font-bold text-white text-base">GeoGuessr - Exploration Suite</h4>
+                                <p class="text-[10px] text-slate-500 mono uppercase tracking-wider">v1.8.0-stable</p>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <button onclick="openModal()" class="text-[11px] mono text-emerald-400 hover:text-emerald-300 transition flex items-center">
-                                <i class="fas fa-book-open mr-1.5 text-[9px]"></i>Guide
+                        <div class="flex items-center space-x-4">
+                            <button onclick="openModal()" class="text-xs font-bold text-emerald-400 hover:bg-emerald-400/10 px-4 py-2 rounded-lg transition border border-emerald-400/20 flex items-center">
+                                <i class="fas fa-book-open mr-2"></i>Guide
                             </button>
-                            <span class="text-[10px] mono text-slate-600 border-l border-slate-800 pl-3">2 Assets</span>
+                            <span class="text-[10px] mono text-slate-600 bg-slate-950/50 px-3 py-1.5 rounded-md border border-slate-800">2 ASSETS</span>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="text-[11px] uppercase tracking-wider text-slate-500 bg-slate-950/30">
+                        <table class="w-full text-left text-sm whitespace-nowrap table-fixed">
+                            <thead class="text-[10px] uppercase tracking-widest text-slate-500 bg-slate-950/40">
                                 <tr>
-                                    <th class="px-5 py-3 font-medium">Build</th>
-                                    <th class="px-5 py-3 font-medium">Description</th>
-                                    <th class="px-5 py-3 font-medium text-right">Action</th>
+                                    <th class="px-6 py-4 font-bold border-b border-slate-800/50 w-1/3">Build Name</th>
+                                    <th class="px-6 py-4 font-bold border-b border-slate-800/50 w-1/3">Optimization</th>
+                                    <th class="px-6 py-4 font-bold border-b border-slate-800/50 text-right w-1/3">Deployment</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800/30">
-                                <tr class="hover:bg-emerald-500/[0.02] transition">
-                                    <td class="px-5 py-3 mono text-emerald-400 text-xs">v1.7.1-release.js</td>
-                                    <td class="px-5 py-3 text-slate-400 text-sm">Core exploration logic and coordinate stabilization.</td>
-                                    <td class="px-5 py-3 text-right">
-                                        <a href="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/GeoGuessr%20-%20Let's%20explore%20the%20world!/version1.7.1-release.js" target="_blank" class="text-[11px] font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-3.5 py-1.5 rounded-md transition">Install</a>
+                                <tr class="hover:bg-emerald-500/[0.03] transition-colors">
+                                    <td class="px-6 py-4 mono text-emerald-400 font-medium truncate">v1.7.1-release.js</td>
+                                    <td class="px-6 py-4 text-slate-400 text-xs truncate">Core exploration logic and stabilization.</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <a href="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/GeoGuessr%20-%20Let's%20explore%20the%20world!/version1.7.1-release.js" target="_blank" class="inline-block text-[10px] font-black uppercase text-white bg-emerald-600 hover:bg-emerald-500 px-6 py-2.5 rounded-lg transition tracking-widest">Install</a>
                                     </td>
                                 </tr>
-                                <tr class="hover:bg-emerald-500/[0.02] transition">
-                                    <td class="px-5 py-3 mono text-emerald-400 text-xs">v1.8.0-release.js</td>
-                                    <td class="px-5 py-3 text-slate-400 text-sm">Enhanced API integration and performance optimization.</td>
-                                    <td class="px-5 py-3 text-right">
-                                        <a href="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/GeoGuessr%20-%20Let's%20explore%20the%20world!/version1.8.0-release.js" target="_blank" class="text-[11px] font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-3.5 py-1.5 rounded-md transition">Install</a>
+                                <tr class="hover:bg-emerald-500/[0.03] transition-colors">
+                                    <td class="px-6 py-4 mono text-emerald-400 font-medium truncate">v1.8.0-release.js</td>
+                                    <td class="px-6 py-4 text-slate-400 text-xs truncate">Enhanced API integration & efficiency.</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <a href="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/GeoGuessr%20-%20Let's%20explore%20the%20world!/version1.8.0-release.js" target="_blank" class="inline-block text-[10px] font-black uppercase text-white bg-emerald-600 hover:bg-emerald-500 px-6 py-2.5 rounded-lg transition tracking-widest">Install</a>
                                     </td>
                                 </tr>
                             </tbody>
@@ -303,37 +289,38 @@
                     </div>
                 </div>
 
-                <!-- Chess.com -->
-                <div class="glass-card rounded-xl overflow-hidden">
-                    <div class="bg-slate-900/40 px-5 py-3.5 border-b border-slate-800/50 flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-[#769656]/10 p-1.5 rounded-lg border border-[#769656]/20">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                    <path d="M19 5C17.5 3 15 2 12 2C8 2 5 4 5 7C5 9 6.5 10.5 8 11.5C8 11.5 7 13 7 14.5C7 16 8 17 8 17L6 20H18L16 17C16 17 17 16 17 14.5C17 13 16 11.5 16 11.5C17.5 10.5 19 9 19 7C19 6.5 19 5.5 19 5Z" fill="#769656" stroke="#8fa866" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <circle cx="14" cy="7" r="1.2" fill="#1e293b"/>
-                                    <path d="M6 20H18" stroke="#769656" stroke-width="1.5" stroke-linecap="round"/>
-                                    <path d="M7 22H17" stroke="#769656" stroke-width="1.5" stroke-linecap="round"/>
-                                </svg>
+                <!-- Chess.com Card -->
+                <div class="glass-card rounded-2xl overflow-hidden group">
+                    <div class="bg-slate-900/60 px-6 py-5 border-b border-slate-800/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="relative w-12 h-12 flex-shrink-0">
+                                <div class="absolute inset-0 bg-[#769656]/20 blur-lg rounded-xl opacity-0 group-hover:opacity-100 transition"></div>
+                                <div class="relative w-12 h-12 rounded-xl overflow-hidden border border-[#769656]/30 bg-slate-900">
+                                    <img src="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/main/public/image/chess.com.png" alt="Chess.com" class="w-full h-full object-cover">
+                                </div>
                             </div>
-                            <h4 class="font-semibold text-white text-sm">Chess.com - Play Chess Online</h4>
+                            <div>
+                                <h4 class="font-bold text-white text-base">Chess.com - Board Analysis</h4>
+                                <p class="text-[10px] text-slate-500 mono uppercase tracking-wider">v1.0.0-stable</p>
+                            </div>
                         </div>
-                        <span class="text-[10px] mono text-slate-600">1 Asset</span>
+                        <span class="text-[10px] mono text-slate-600 bg-slate-950/50 px-3 py-1.5 rounded-md border border-slate-800">1 ASSET</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="text-[11px] uppercase tracking-wider text-slate-500 bg-slate-950/30">
+                        <table class="w-full text-left text-sm whitespace-nowrap table-fixed">
+                            <thead class="text-[10px] uppercase tracking-widest text-slate-500 bg-slate-950/40">
                                 <tr>
-                                    <th class="px-5 py-3 font-medium">Build</th>
-                                    <th class="px-5 py-3 font-medium">Description</th>
-                                    <th class="px-5 py-3 font-medium text-right">Action</th>
+                                    <th class="px-6 py-4 font-bold border-b border-slate-800/50 w-1/3">Build Name</th>
+                                    <th class="px-6 py-4 font-bold border-b border-slate-800/50 w-1/3">Details</th>
+                                    <th class="px-6 py-4 font-bold border-b border-slate-800/50 text-right w-1/3">Deployment</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr class="hover:bg-[#769656]/[0.02] transition">
-                                    <td class="px-5 py-3 mono text-[#8fa866] text-xs">v1.0.0-release.js</td>
-                                    <td class="px-5 py-3 text-slate-400 text-sm">Initial stable build for board analysis and UI.</td>
-                                    <td class="px-5 py-3 text-right">
-                                        <a href="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/Chess.com%20-%20Play%20Chess%20Online%20-%20Free%20Games/version1.0.0-release.js" target="_blank" class="text-[11px] font-semibold text-white bg-[#769656] hover:bg-[#8fa866] px-3.5 py-1.5 rounded-md transition">Install</a>
+                            <tbody class="divide-y divide-slate-800/30">
+                                <tr class="hover:bg-[#769656]/[0.05] transition-colors">
+                                    <td class="px-6 py-4 mono text-[#8fa866] font-medium truncate">v1.0.0-release.js</td>
+                                    <td class="px-6 py-4 text-slate-400 text-xs truncate">Initial build for board detection.</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <a href="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/Chess.com%20-%20Play%20Chess%20Online%20-%20Free%20Games/version1.0.0-release.js" target="_blank" class="inline-block text-[10px] font-black uppercase text-white bg-[#769656] hover:bg-[#8fa866] px-6 py-2.5 rounded-lg transition tracking-widest">Install</a>
                                     </td>
                                 </tr>
                             </tbody>
@@ -342,69 +329,94 @@
                 </div>
 
                 <!-- Empty State -->
-                <div class="border border-dashed border-slate-800 p-10 rounded-xl flex flex-col items-center justify-center text-center">
-                    <div class="h-8 w-8 border border-slate-800 rounded-full flex items-center justify-center mb-3 text-slate-700">
-                        <i class="fas fa-plus text-xs"></i>
+                <div class="border-2 border-dashed border-slate-800/60 p-12 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-slate-700 transition">
+                    <div class="h-12 w-12 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center mb-4 text-slate-600 group-hover:text-blue-500 transition">
+                        <i class="fas fa-plus text-lg"></i>
                     </div>
-                    <p class="text-slate-600 text-xs font-medium tracking-wide">More scripts coming soon</p>
+                    <p class="text-slate-400 text-sm font-bold tracking-wide">Menunggu Proyek Berikutnya</p>
+                    <p class="text-slate-600 text-xs mt-1">Skrip baru sedang dalam tahap pengembangan.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Documentation -->
-        <section id="documentation" class="py-20 border-t border-slate-900">
-            <div class="grid md:grid-cols-2 gap-14 items-center">
-                <div>
-                    <h3 class="text-2xl font-bold mb-4 tracking-tight text-white">Contributing</h3>
-                    <p class="text-slate-400 mb-8 leading-relaxed text-sm">
-                        All scripts follow the Standardized Script Schema (S3). Contributors must maintain strict modularity and documentation practices.
-                    </p>
-                    <ul class="space-y-5">
-                        <li class="flex items-start">
-                            <div class="h-5 w-5 rounded bg-blue-500/15 flex items-center justify-center mr-3 mt-0.5 border border-blue-500/25 flex-shrink-0">
-                                <i class="fas fa-check text-[9px] text-blue-500"></i>
+        <!-- Documentation Section -->
+        <section id="documentation" class="py-24 border-t border-slate-900">
+            <div class="grid lg:grid-cols-2 gap-16 items-start">
+                <div class="space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-black text-white mb-4 tracking-tight">Standardized Architecture</h2>
+                        <p class="text-slate-400 leading-relaxed">
+                            Seluruh skrip mengikuti <span class="text-blue-400 font-bold">Standardized Script Schema (S3)</span>. Kami memprioritaskan keamanan kode, performa, dan kemudahan bagi pengguna akhir.
+                        </p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-800">
+                            <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20 mb-4">
+                                <i class="fas fa-bolt text-blue-500 text-xs"></i>
+                            </div>
+                            <h5 class="text-white font-bold text-sm mb-2">ES6+ Standards</h5>
+                            <p class="text-slate-500 text-xs leading-relaxed">Syntax modern dengan optimasi runtime tingkat tinggi.</p>
+                        </div>
+                        <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-800">
+                            <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20 mb-4">
+                                <i class="fas fa-shield-halved text-purple-500 text-xs"></i>
+                            </div>
+                            <h5 class="text-white font-bold text-sm mb-2">Namespace Validation</h5>
+                            <p class="text-slate-500 text-xs leading-relaxed">Header UserScript wajib untuk validasi lingkungan browser.</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-900 flex items-center justify-between">
+                        <a href="https://github.com/JD-YH03D/Releases-Published/issues" target="_blank" class="group flex items-center space-x-3">
+                            <div class="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20 group-hover:bg-red-500/20 transition">
+                                <i class="fas fa-bug text-sm text-red-500"></i>
                             </div>
                             <div>
-                                <span class="text-sm font-semibold text-white block mb-0.5">ES6+ Standards</span>
-                                <span class="text-xs text-slate-500 leading-relaxed">Modern syntax with strict linting requirements.</span>
+                                <span class="text-xs font-bold text-slate-300 block">Ada Masalah?</span>
+                                <span class="text-[10px] text-slate-500 font-medium">Buka Issue di GitHub</span>
                             </div>
-                        </li>
-                        <li class="flex items-start">
-                            <div class="h-5 w-5 rounded bg-blue-500/15 flex items-center justify-center mr-3 mt-0.5 border border-blue-500/25 flex-shrink-0">
-                                <i class="fas fa-check text-[9px] text-blue-500"></i>
-                            </div>
-                            <div>
-                                <span class="text-sm font-semibold text-white block mb-0.5">Metadata Headers</span>
-                                <span class="text-xs text-slate-500 leading-relaxed">Mandatory UserScript headers for namespace validation.</span>
-                            </div>
-                        </li>
-                    </ul>
-                    <div class="mt-8 pt-5 border-t border-slate-800/50">
-                        <a href="https://github.com/JD-YH03D/Releases-Published/issues" target="_blank" class="group flex items-center space-x-2.5">
-                            <div class="h-7 w-7 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 group-hover:bg-red-500/20 transition">
-                                <i class="fas fa-bug text-[10px] text-red-500"></i>
-                            </div>
-                            <span class="text-xs font-semibold text-slate-400 group-hover:text-red-400 transition">Report an Issue</span>
                         </a>
                     </div>
                 </div>
 
-                <div class="bg-[#0b1120] rounded-xl border border-slate-800 overflow-hidden">
-                    <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900/50 border-b border-slate-800">
-                        <div class="flex space-x-1.5">
-                            <div class="w-2.5 h-2.5 rounded-full bg-red-500/40"></div>
-                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/40"></div>
-                            <div class="w-2.5 h-2.5 rounded-full bg-green-500/40"></div>
+                <!-- Code Terminal Preview -->
+                <div class="bg-[#0b1120] rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+                    <div class="flex items-center justify-between px-5 py-3 bg-slate-900/80 border-b border-slate-800">
+                        <div class="flex space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-slate-700"></div>
+                            <div class="w-3 h-3 rounded-full bg-slate-700"></div>
+                            <div class="w-3 h-3 rounded-full bg-slate-700"></div>
                         </div>
-                        <span class="text-[10px] mono text-slate-600">terminal</span>
+                        <div class="flex items-center text-[10px] mono text-slate-500 font-bold uppercase tracking-widest">
+                            <i class="fas fa-terminal mr-2"></i> development_shell
+                        </div>
                     </div>
-                    <div class="p-5 text-[12px] mono leading-relaxed">
-                        <p class="text-slate-500"># Clone repository</p>
-                        <p class="text-blue-400">git clone <span class="text-slate-300">https://github.com/JD-YH03D/Releases-Published</span></p>
-                        <p class="text-blue-400">cd <span class="text-slate-300">Releases-Published</span></p>
-                        <p class="text-slate-500 mt-3"># Build</p>
-                        <p class="text-blue-400">npm <span class="text-slate-300">install</span> && npm <span class="text-slate-300">run build</span></p>
-                        <p class="text-green-500 mt-2">Done. 12 scripts processed.</p>
+                    <div class="p-6 text-[12px] mono leading-relaxed overflow-x-auto">
+                        <div class="flex">
+                            <span class="text-slate-600 mr-4">1</span>
+                            <p class="text-slate-500"># Cloning the repository</p>
+                        </div>
+                        <div class="flex">
+                            <span class="text-slate-600 mr-4">2</span>
+                            <p class="text-blue-400">git clone <span class="text-emerald-400">"https://github.com/JD-YH03D/Scripts"</span></p>
+                        </div>
+                        <div class="flex">
+                            <span class="text-slate-600 mr-4">3</span>
+                            <p class="text-blue-400">cd <span class="text-slate-300">Scripts/build</span></p>
+                        </div>
+                        <div class="flex mt-3">
+                            <span class="text-slate-600 mr-4">4</span>
+                            <p class="text-slate-500"># Installing dependencies</p>
+                        </div>
+                        <div class="flex">
+                            <span class="text-slate-600 mr-4">5</span>
+                            <p class="text-blue-400">npm <span class="text-slate-300">install</span> && npm <span class="text-slate-300">run optimize</span></p>
+                        </div>
+                        <div class="flex mt-3">
+                            <span class="text-slate-600 mr-4">6</span>
+                            <p class="text-emerald-500 font-bold">>>> Build success: 2 packages optimized.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -412,17 +424,30 @@
     </main>
 
     <!-- Footer -->
-    <footer class="py-10 border-t border-slate-900 bg-slate-950/50 mt-8">
-        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-                <p class="text-white font-semibold text-sm mb-0.5">JD-YH03D</p>
-                <p class="text-slate-600 text-[11px]">Copyright 2024. MIT License.</p>
-            </div>
-            <div class="flex items-center space-x-6">
-                <a href="https://github.com/JD-YH03D/Releases-Published/issues" target="_blank" class="text-slate-500 hover:text-red-400 transition text-xs font-medium">Issues</a>
-                <a href="#" class="text-slate-500 hover:text-white transition text-xs font-medium">Privacy</a>
-                <a href="#" class="text-slate-500 hover:text-white transition text-xs font-medium">Terms</a>
-                <a href="https://github.com/JD-YH03D" target="_blank" class="text-slate-400 hover:text-blue-500 transition"><i class="fab fa-github text-base"></i></a>
+    <footer class="py-12 border-t border-slate-900 bg-slate-950 mt-12">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="text-center md:text-left">
+                    <div class="flex items-center justify-center md:justify-start space-x-3 mb-4">
+                        <div class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                            <i class="fas fa-code text-white text-xs"></i>
+                        </div>
+                        <span class="font-black text-white text-lg tracking-tight">JD-YH03D</span>
+                    </div>
+                    <p class="text-slate-600 text-xs font-medium">© 2024 JD-YH03D. Lisensi MIT.</p>
+                    <p class="text-slate-700 text-[10px] mt-1 italic leading-relaxed max-w-xs uppercase tracking-tighter">Production Grade Web Automation Solutions.</p>
+                </div>
+                
+                <div class="flex flex-col items-center md:items-end gap-4">
+                    <div class="flex items-center space-x-8">
+                        <a href="#" class="text-slate-500 hover:text-white transition text-xs font-bold uppercase tracking-widest">Privacy</a>
+                        <a href="#" class="text-slate-500 hover:text-white transition text-xs font-bold uppercase tracking-widest">Terms</a>
+                        <a href="https://github.com/JD-YH03D/Releases-Published" target="_blank" class="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600 transition shadow-inner">
+                            <i class="fab fa-github text-lg"></i>
+                        </a>
+                    </div>
+                    <p class="text-slate-700 text-[10px] font-mono tracking-widest">v2.4.0-REV2024</p>
+                </div>
             </div>
         </div>
     </footer>
@@ -432,13 +457,17 @@
 
         function openModal() {
             modal.classList.remove('hidden');
-            modal.classList.add('active');
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
             document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
             modal.classList.remove('active');
-            modal.classList.add('hidden');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
             document.body.style.overflow = 'auto';
         }
 
@@ -446,25 +475,31 @@
             if (e.target === modal) closeModal();
         });
 
+        // Smooth Scroll dengan Offset
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                const target = document.querySelector(targetId);
                 if (target) {
                     window.scrollTo({
-                        top: target.offsetTop - 70,
+                        top: target.offsetTop - 80,
                         behavior: 'smooth'
                     });
                 }
             });
         });
 
+        // Header scroll effect
         window.addEventListener('scroll', () => {
             const header = document.querySelector('header');
             if (window.scrollY > 20) {
-                header.classList.add('shadow-lg', 'shadow-blue-950/10');
+                header.classList.add('border-slate-700/50', 'shadow-2xl', 'py-3');
+                header.classList.remove('py-4');
             } else {
-                header.classList.remove('shadow-lg', 'shadow-blue-950/10');
+                header.classList.remove('border-slate-700/50', 'shadow-2xl', 'py-3');
+                header.classList.add('py-4');
             }
         });
     </script>
