@@ -1,6 +1,12 @@
 {
   "version": "2.1.0",
-  "hash": "ISI_HASH_SCRIPT_ASLI",
+  "hash": "",
   "force": false,
-  "message": "Official build"
+  "message": "Official build verified.",
+  "build": {
+    "channel": "stable",
+    "timestamp": "2026-05-23T00:00:00Z",
+    "runtime": "Bintang Toba Pro",
+    "protection": true
+  }
 }
