@@ -82,6 +82,26 @@ Every script in this repository follows strict engineering principles:
 
 <div align="center">
 
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Loader
+    participant GitHub
+    participant Cache
+
+    Browser->>Loader: Page Start
+    Loader->>GitHub: Check version.json
+    alt Update Available
+        Loader->>GitHub: Fetch core.user.js
+        GitHub-->>Loader: Bundle Output
+        Loader->>Loader: Verify Hash
+        Loader->>Cache: Update Local Backup
+    else No Connection / Timeout
+        Loader->>Cache: Load Last Known Good
+    end
+    Loader->>Browser: Inject & Execute
+```
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │                  BINTANG TOBA PRO                   │
