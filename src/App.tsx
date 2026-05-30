@@ -11,10 +11,10 @@ const GitHubIcon = (props: any) => (
 
 export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<<"production" | "legacy">("production");
+  const [activeTab, setActiveTab] = useState<"production" | "legacy">("production");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
-  const modalRef = useRef<<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Handle scroll effect for header
   useEffect(() => {
@@ -486,7 +486,7 @@ export default function App() {
                         </div>
                         <div>
                           <h3 className="font-bold text-white text-base">GeoGuessr — Exploration Suite</h3>
-                          <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">v2.0.0-stable</p>
+                          <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">v1.8.0-stable</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
@@ -494,7 +494,7 @@ export default function App() {
                           <Book size={14} className="mr-2" />
                           Guide
                         </button>
-                        <span className="text-[10px] font-mono text-slate-600 bg-slate-950/50 px-3 py-1.5 rounded-md border border-slate-800">1 ASSET</span>
+                        <span className="text-[10px] font-mono text-slate-600 bg-slate-950/50 px-3 py-1.5 rounded-md border border-slate-800">4 ASSETS</span>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -507,8 +507,8 @@ export default function App() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/30">
-                          {[
-                            { version: "v2.0.0-release.js", desc: "Latest stable build with full feature set.", url: "https://greasyfork.org/id/scripts/578278-geoguessr-let-s-explore-the-world" },
+                          {[                           
+                            { version: "v2.0.0-release.js", desc: "", url: "https://greasyfork.org/id/scripts/578278-geoguessr-let-s-explore-the-world" },
                           ].map((item, index) => (
                             <motion.tr key={item.version} className="hover:bg-emerald-500/[0.04] transition-colors" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 }}>
                               <td className="px-6 py-4 font-mono text-emerald-400 font-medium text-xs">{item.version}</td>
