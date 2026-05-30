@@ -565,11 +565,11 @@ export default function App() {
                         </thead>
                         <tbody className="divide-y divide-slate-800/30">
                           <motion.tr className="hover:bg-[#769656]/[0.05] transition-colors" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
-                            <td className="px-6 py-4 font-mono text-[#8fa866] font-medium text-xs">v1.0.0-release.js</td>
+                            <td className="px-6 py-4 font-mono text-[#8fa866] font-medium text-xs">v1.2.0-release.js</td>
                             <td className="px-6 py-4 text-slate-400 text-xs hidden sm:table-cell">Initial build for board detection and analysis.</td>
                             <td className="px-6 py-4 text-right">
                               <a
-                                href="https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/Chess.com%20-%20Play%20Chess%20Online%20-%20Free%20Games/version1.0.0-release.js"
+                                href="https://greasyfork.org/id/scripts/579299-chess-com-play-chess-online-free-games/code"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-block text-[10px] font-black uppercase text-white bg-[#769656] hover:bg-[#8fa866] active:bg-[#5a7340] px-5 py-2.5 rounded-lg transition tracking-widest"
