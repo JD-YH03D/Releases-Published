@@ -507,10 +507,7 @@ export default function App() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/30">
-                          {[
-                            { version: "v1.7.1-release.js", desc: "Core exploration logic and stabilization.", url: "https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/GeoGuessr%20-%20Let%27s%20explore%20the%20world!/version1.7.1-release.js" },
-                            { version: "v1.8.0-release.js", desc: "Enhanced API integration and efficiency.", url: "https://raw.githubusercontent.com/JD-YH03D/Releases-Published/refs/heads/main/GeoGuessr%20-%20Let%27s%20explore%20the%20world!/version1.8.0-release.js" },
-                            { version: "v1.9.0-release.js", desc: ".", url: "https://greasyfork.org/id/scripts/578278-geoguessr-let-s-explore-the-world?version=1828381" },
+                          {[                           
                             { version: "v2.0.0-release.js", desc: "", url: "https://greasyfork.org/id/scripts/578278-geoguessr-let-s-explore-the-world" },
                           ].map((item, index) => (
                             <motion.tr key={item.version} className="hover:bg-emerald-500/[0.04] transition-colors" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 }}>
