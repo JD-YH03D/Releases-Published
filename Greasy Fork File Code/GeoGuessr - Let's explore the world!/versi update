@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GeoGuessr - Let's explore the world!
 // @namespace    https://github.com/JD-YH03D/release
-// @version      2.1.0
+// @version      2.1.1
 // @description  Universal geography game assistant with Mini Map - GeoGuessr, WorldGuessr, OpenGuessr, FreeGuessr
 // @author       Bintang Toba Pro
 // @license      MIT
@@ -21,7 +21,7 @@
 // @connect      raw.githubusercontent.com
 // @connect      npoint.io
 // @run-at       document-idle
-// @icon         https://www.geoguessr.com/favicon.ico
+// @icon         https://raw.githubusercontent.com/JD-YH03D/BintangToba/main/icon.svg
 // @downloadURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js
 // @updateURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.meta.js
 // ==/UserScript==
@@ -45,10 +45,13 @@
 | `D`   | Discord            | Send location to Discord webhook               |
 └─────────────────────────────────────────────────────────────────────────────┘
 
-AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
-  OFF → "1"/"2" only shows an internal overlay marker (no game interaction)
-  ON  → "1" pins your guess at the exact location on the game map
-        "2" pins your guess with a random ~50 m offset (safe mode)
+MARKER MODE:
+  Auto Marker OFF → marker placement stays manual
+  Auto Marker ON  → marker/pin can be placed automatically each round
+
+AUTO PIN MODE:
+  OFF → "1"/"2" places internal marker only
+  ON  → "1" pins exact location on game map, "2" pins with safe jitter
 */
 
 /**
@@ -84,13 +87,13 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
     const CONFIG = Object.freeze({
 
         NAME: 'Bintang Toba Pro',
-        VERSION: '2.1.0',
+        VERSION: '2.1.1',
         DEBUG: false, // Set to true for verbose logging
 
         NOMINATIM_URL: 'https://nominatim.openstreetmap.org/reverse',
         LEAFLET_CSS: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
         LEAFLET_JS: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-        VERSION_METADATA_URL: 'https://api.npoint.io/6966baef3a45eff8cac4',
+        VERSION_METADATA_URL: 'https://api.npoint.io/4377b6688ee95de1f1ce',
 
         STORAGE_KEYS: Object.freeze({
             DISCORD_WEBHOOK: 'bintang_toba_discord_webhook',
@@ -175,6 +178,7 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
 
         DEFAULT_FEATURES: Object.freeze({
             autoMarker: false,
+            autoPin: false,
             safeMode: false
         }),
 
@@ -191,19 +195,44 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
 
         MAP_LAYERS: Object.freeze({
             default: Object.freeze({
-                name: 'Default',
+                name: 'OpenStreetMap',
                 url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 options: { maxZoom: 19 }
             }),
             dark: Object.freeze({
-                name: 'Dark',
+                name: 'Carto Dark',
                 url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
                 options: { maxZoom: 19, subdomains: 'abcd' }
             }),
+            light: Object.freeze({
+                name: 'Carto Light',
+                url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                options: { maxZoom: 19, subdomains: 'abcd' }
+            }),
             terrain: Object.freeze({
-                name: 'Terrain',
+                name: 'OpenTopoMap',
                 url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
                 options: { maxZoom: 17 }
+            }),
+            voyager: Object.freeze({
+                name: 'Voyager',
+                url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                options: { maxZoom: 20, subdomains: 'abcd' }
+            }),
+            positron: Object.freeze({
+                name: 'Positron',
+                url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                options: { maxZoom: 20, subdomains: 'abcd' }
+            }),
+            satellite: Object.freeze({
+                name: 'ESRI Satellite',
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                options: { maxZoom: 19 }
+            }),
+            hybrid: Object.freeze({
+                name: 'Satellite Hybrid',
+                url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                options: { maxZoom: 19 }
             })
         }),
 
@@ -1832,6 +1861,26 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
         const wrap = container || document.getElementById('geohelper-phone-frame') || state.panel;
         if (!wrap) return;
 
+        const applyToggleDot = (slider, dot, isOn) => {
+            if (!slider || !dot) return;
+            const isCircleToggle = (slider.clientWidth || 0) <= 26;
+            if (isCircleToggle) {
+                dot.style.left = '50%';
+                dot.style.top = '50%';
+                dot.style.transform = 'translate(-50%, -50%)';
+                dot.style.opacity = isOn ? '1' : '0';
+                return;
+            }
+            const padding = 4;
+            const sliderW = slider.clientWidth || 48;
+            const dotW = dot.clientWidth || 18;
+            const travel = Math.max(0, sliderW - dotW - (padding * 2));
+            dot.style.left = isOn ? `${padding + travel}px` : `${padding}px`;
+            dot.style.top = '';
+            dot.style.transform = '';
+            dot.style.opacity = '1';
+        };
+
         const updateToggle = (id, isOn) => {
             const cb = wrap.querySelector(`#${id}`);
             const slider = wrap.querySelector(`#${id}-slider`);
@@ -1841,12 +1890,13 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
                 cb.checked = isOn;
                 slider.style.backgroundColor = isOn ? '#2f7cf6' : '#2b313b';
                 slider.style.borderColor = isOn ? '#2f7cf6' : '#465062';
-                dot.style.left = isOn ? '24px' : '4px';
+                applyToggleDot(slider, dot, isOn);
                 dot.style.backgroundColor = isOn ? '#f8fafc' : '#9ca3af';
             }
         };
 
         updateToggle('geohelper-auto-marker', !!state.features?.autoMarker);
+        updateToggle('geohelper-auto-pin', !!state.features?.autoPin);
         updateToggle('geohelper-safe-mode', !!state.features?.safeMode);
     }
 
@@ -1885,7 +1935,22 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
             cb.checked = isCompact;
             slider.style.backgroundColor = isCompact ? '#2f7cf6' : '#2b313b';
             slider.style.borderColor = isCompact ? '#2f7cf6' : '#465062';
-            dot.style.left = isCompact ? '24px' : '4px';
+            const isCircleToggle = (slider.clientWidth || 0) <= 26;
+            if (isCircleToggle) {
+                dot.style.left = '50%';
+                dot.style.top = '50%';
+                dot.style.transform = 'translate(-50%, -50%)';
+                dot.style.opacity = isCompact ? '1' : '0';
+            } else {
+                const padding = 4;
+                const sliderW = slider.clientWidth || 48;
+                const dotW = dot.clientWidth || 18;
+                const travel = Math.max(0, sliderW - dotW - (padding * 2));
+                dot.style.left = isCompact ? `${padding + travel}px` : `${padding}px`;
+                dot.style.top = '';
+                dot.style.transform = '';
+                dot.style.opacity = '1';
+            }
             dot.style.backgroundColor = isCompact ? '#f8fafc' : '#9ca3af';
         }
 
@@ -2998,8 +3063,59 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
     }
 
     function autoPlaceMarker() {
+        if (!state.features?.autoMarker) return;
+        if (state.markerPlacedThisRound) return;
 
-        return;
+        const coords = extractCoordinates();
+        if (!coords || !Validators.isValidCoord(coords.lat, coords.lng)) return;
+
+        if (state.features?.autoPin) {
+            const ok = placeGuessOnMap(!!state.features?.safeMode);
+            if (ok) state.markerPlacedThisRound = true;
+            return;
+        }
+
+        const finalCoords = applySafeMode(coords);
+
+        if (state.marker) {
+            try {
+                if (typeof google !== 'undefined' && google.maps && state.marker.setPosition) {
+                    state.marker.setPosition(new google.maps.LatLng(finalCoords.lat, finalCoords.lng));
+                } else if (typeof L !== 'undefined' && state.marker.setLatLng) {
+                    state.marker.setLatLng([finalCoords.lat, finalCoords.lng]);
+                }
+                state.markerPlacedThisRound = true;
+            } catch (e) {
+                Logger.debug('Auto marker update failed:', e.message);
+            }
+            return;
+        }
+
+        if (!state.gameMap) findMapInstance();
+
+        if (typeof google !== 'undefined' && google.maps && state.gameMap) {
+            state.marker = new google.maps.Marker({
+                position: new google.maps.LatLng(finalCoords.lat, finalCoords.lng),
+                map: state.gameMap,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: '#ff4444',
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 2
+                }
+            });
+            state.markerPlacedThisRound = true;
+            updateStatusText('Auto Marked', '#4ade80');
+            return;
+        }
+
+        if (typeof L !== 'undefined' && state.gameMap) {
+            state.marker = L.marker([finalCoords.lat, finalCoords.lng]).addTo(state.gameMap);
+            state.markerPlacedThisRound = true;
+            updateStatusText('Auto Marked', '#4ade80');
+        }
     }
 
     // ========================================================================
@@ -3154,6 +3270,11 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
 
     function placeGuessOnMap(withJitter = false) {
         if (!guardProtectedUsage('Place Guess')) return false;
+        if (!state.features?.autoPin) {
+            updateStatusText('Auto Pin OFF', '#f59e0b');
+            Logger.debug('placeGuessOnMap blocked: autoPin is OFF');
+            return false;
+        }
 
         const raw = extractCoordinates();
         if (!raw || !Validators.isValidCoord(raw.lat, raw.lng)) {
@@ -3727,7 +3848,7 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            if (state.features?.autoMarker) {
+            if (state.features?.autoPin) {
 
                 placeGuessOnMap(false);
             } else {
@@ -3744,7 +3865,7 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            if (state.features?.autoMarker) {
+            if (state.features?.autoPin) {
 
                 placeGuessOnMap(true);
             } else {
@@ -4117,6 +4238,14 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
             if (el) el.style.background = '#0b0d11';
         });
 
+        const appGrid = root.querySelector('#geohelper-menu-view > div');
+        if (appGrid) {
+            appGrid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+            appGrid.style.gap = `${px(14)} ${px(10)}`;
+            appGrid.style.padding = `${px(6)} ${px(2)} 0`;
+            appGrid.style.boxSizing = 'border-box';
+        }
+
         const locationInfo = root.querySelector('#geohelper-location-info');
         if (locationInfo) {
             locationInfo.style.background = '#0f1319';
@@ -4138,16 +4267,55 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
             navStrip.style.background = '#05070b';
         }
 
+        root.querySelectorAll('.geohelper-app-btn').forEach((btn) => {
+            btn.style.width = '100%';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'flex-start';
+            btn.style.gap = px(6);
+            btn.style.boxSizing = 'border-box';
+            btn.style.padding = '0';
+        });
+
         root.querySelectorAll('.geohelper-app-icon').forEach((iconBox) => {
-            iconBox.style.background = 'linear-gradient(180deg, #2f3339 0%, #22252a 100%)';
+            const baseBg = iconBox.getAttribute('data-bg') || 'linear-gradient(180deg, #2f3339 0%, #22252a 100%)';
+            iconBox.style.background = baseBg;
             iconBox.style.border = '1px solid #3a3f48';
-            iconBox.style.width = px(46);
-            iconBox.style.height = px(46);
+            iconBox.style.width = px(48);
+            iconBox.style.height = px(48);
+            iconBox.style.margin = '0 auto';
+            iconBox.style.boxSizing = 'border-box';
         });
 
         root.querySelectorAll('.geohelper-app-label').forEach((label) => {
             label.style.fontSize = px(8);
             label.style.color = '#d1d5db';
+            label.style.textAlign = 'center';
+            label.style.lineHeight = '1.2';
+            label.style.display = 'block';
+            label.style.width = '100%';
+        });
+
+        ['geohelper-auto-marker', 'geohelper-auto-pin', 'geohelper-safe-mode', 'geohelper-ui-scale'].forEach((id) => {
+            const cb = root.querySelector(`#${id}`);
+            const slider = root.querySelector(`#${id}-slider`);
+            const dot = root.querySelector(`#${id}-dot`);
+            const label = cb?.parentElement;
+            if (label && label.style) {
+                label.style.width = px(22);
+                label.style.height = px(22);
+            }
+            if (slider) {
+                slider.style.borderRadius = '50%';
+                slider.style.borderWidth = '2px';
+            }
+            if (dot) {
+                dot.style.width = px(10);
+                dot.style.height = px(10);
+                dot.style.left = '50%';
+                dot.style.top = '50%';
+                dot.style.transform = 'translate(-50%, -50%)';
+                dot.style.borderRadius = '50%';
+            }
         });
 
         setFeatureToggleUi(root);
@@ -4180,7 +4348,7 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
         const markBtn = document.getElementById('geohelper-action-mark');
         if (markBtn) {
             markBtn.onclick = Throttle.createHandler('panel_mark_btn', 300, () => {
-                if (state.features?.autoMarker) {
+                if (state.features?.autoPin) {
                     const ok = placeGuessOnMap(false);
                     flashActionButton(markBtn, ok ? 'Pinned!' : 'Error');
                 } else {
@@ -4195,7 +4363,7 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
         const safeBtn = document.getElementById('geohelper-action-safe');
         if (safeBtn) {
             safeBtn.onclick = Throttle.createHandler('panel_safe_btn', 300, () => {
-                if (state.features?.autoMarker) {
+                if (state.features?.autoPin) {
                     const ok = placeGuessOnMap(true);
                     flashActionButton(safeBtn, ok ? 'Safe Pin!' : 'Error');
                 } else {
@@ -4297,6 +4465,14 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
                 setFeatureToggleUi(phoneFrame);
                 state.currentPreset = detectPresetFromFeatures(state.features);
                 setPresetButtonsUi(phoneFrame);
+            });
+        }
+
+        const apCb = phoneFrame.querySelector('#geohelper-auto-pin');
+        if (apCb) {
+            apCb.addEventListener('change', () => {
+                state.features.autoPin = apCb.checked;
+                setFeatureToggleUi(phoneFrame);
             });
         }
 
@@ -4744,19 +4920,27 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
                 <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">
                     <div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:14px;">🔴 SETTING MARKER</div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <div><div style="font-weight:600;font-size:14px;">Auto Click Mode</div><div style="font-size:11px;color:#6b7280;">Press 1/2 = auto click game map</div></div>
-                        <label style="position:relative;display:inline-block;width:48px;height:26px;">
+                        <div><div style="font-weight:600;font-size:14px;">Auto Marker</div><div style="font-size:11px;color:#6b7280;">Auto Marker per round</div></div>
+                        <label style="position:relative;display:inline-block;width:22px;height:22px;">
                             <input type="checkbox" id="geohelper-auto-marker" ${state.features?.autoMarker ? 'checked' : ''} style="opacity:0;width:0;height:0;">
-                            <span id="geohelper-auto-marker-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#f3f4f6;border:2px solid #d1d5db;transition:.3s;border-radius:20px;"></span>
-                            <span id="geohelper-auto-marker-dot" style="position:absolute;height:18px;width:18px;left:4px;bottom:4px;background-color:#9ca3af;transition:.3s;border-radius:50%;"></span>
+                            <span id="geohelper-auto-marker-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>
+                            <span id="geohelper-auto-marker-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>
+                        </label>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <div><div style="font-weight:600;font-size:14px;">Auto Pin</div><div style="font-size:11px;color:#6b7280;">pin guess on game map</div></div>
+                        <label style="position:relative;display:inline-block;width:22px;height:22px;">
+                            <input type="checkbox" id="geohelper-auto-pin" ${state.features?.autoPin ? 'checked' : ''} style="opacity:0;width:0;height:0;">
+                            <span id="geohelper-auto-pin-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>
+                            <span id="geohelper-auto-pin-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>
                         </label>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <div><div style="font-weight:600;font-size:14px;">Safe Mode</div><div style="font-size:11px;color:#6b7280;">Random offset (4.5k+ pts)</div></div>
-                        <label style="position:relative;display:inline-block;width:48px;height:26px;">
+                        <label style="position:relative;display:inline-block;width:22px;height:22px;">
                             <input type="checkbox" id="geohelper-safe-mode" ${state.features?.safeMode ? 'checked' : ''} style="opacity:0;width:0;height:0;">
-                            <span id="geohelper-safe-mode-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#f3f4f6;border:2px solid #d1d5db;transition:.3s;border-radius:20px;"></span>
-                            <span id="geohelper-safe-mode-dot" style="position:absolute;height:18px;width:18px;left:4px;bottom:4px;background-color:#9ca3af;transition:.3s;border-radius:50%;"></span>
+                            <span id="geohelper-safe-mode-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>
+                            <span id="geohelper-safe-mode-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>
                         </label>
                     </div>
                 </div>
@@ -4778,10 +4962,10 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <div><div style="font-weight:600;font-size:14px;">Mode Compact</div><div style="font-size:11px;color:#6b7280;">Off: Normal, On: Compact</div></div>
-                        <label style="position:relative;display:inline-block;width:48px;height:26px;">
+                        <label style="position:relative;display:inline-block;width:22px;height:22px;">
                             <input type="checkbox" id="geohelper-ui-scale" ${state.uiScale === 'compact' ? 'checked' : ''} style="opacity:0;width:0;height:0;">
-                            <span id="geohelper-ui-scale-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.3s;border-radius:20px;"></span>
-                            <span id="geohelper-ui-scale-dot" style="position:absolute;height:18px;width:18px;left:4px;bottom:4px;background-color:#9ca3af;transition:.3s;border-radius:50%;"></span>
+                            <span id="geohelper-ui-scale-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>
+                            <span id="geohelper-ui-scale-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>
                         </label>
                     </div>
                 </div>
@@ -4866,15 +5050,35 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
                     <div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;font-size:13px;font-weight:600;">🎨 Map Layer Style</div>
                     <button data-map-layer="default" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
                         <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-default" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">Default</span>
+                        <span style="font-size:15px;">OpenStreetMap</span>
                     </button>
                     <button data-map-layer="dark" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
                         <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-dark" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">Dark</span>
+                        <span style="font-size:15px;">Carto Dark</span>
                     </button>
-                    <button data-map-layer="terrain" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;cursor:pointer;text-align:left;">
+                    <button data-map-layer="light" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
+                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-light" style="width:10px;height:10px;border-radius:50%;"></div></div>
+                        <span style="font-size:15px;">Carto Light</span>
+                    </button>
+                    <button data-map-layer="terrain" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
                         <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-terrain" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">Terrain</span>
+                        <span style="font-size:15px;">OpenTopoMap</span>
+                    </button>
+                    <button data-map-layer="voyager" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
+                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-voyager" style="width:10px;height:10px;border-radius:50%;"></div></div>
+                        <span style="font-size:15px;">Voyager</span>
+                    </button>
+                    <button data-map-layer="positron" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
+                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-positron" style="width:10px;height:10px;border-radius:50%;"></div></div>
+                        <span style="font-size:15px;">Positron</span>
+                    </button>
+                    <button data-map-layer="satellite" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
+                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-satellite" style="width:10px;height:10px;border-radius:50%;"></div></div>
+                        <span style="font-size:15px;">ESRI Satellite</span>
+                    </button>
+                    <button data-map-layer="hybrid" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;cursor:pointer;text-align:left;">
+                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-hybrid" style="width:10px;height:10px;border-radius:50%;"></div></div>
+                        <span style="font-size:15px;">Satellite Hybrid</span>
                     </button>
                 </div>
                 <div id="geohelper-open-gmaps" style="background:#fff;border-radius:16px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px;">
@@ -5283,6 +5487,7 @@ AUTO-CLICK MODE (toggle in Settings → Auto Click Mode):
         Logger.info('');
         Logger.info('🤖 AUTO FEATURES:');
         Logger.info(`   Auto Marker: ${state.features.autoMarker ? '✅ ON' : '❌ OFF'}`);
+        Logger.info(`   Auto Pin: ${state.features.autoPin ? '✅ ON' : '❌ OFF'}`);
         Logger.info(`   Safe Mode: ${state.features.safeMode ? '✅ ON' : '❌ OFF'}`);
         Logger.info('');
         Logger.info(`🚀 Press ${state.hotkeys.panel} to show panel`);
