@@ -22,8 +22,6 @@
 // @connect      npoint.io
 // @run-at       document-idle
 // @icon         https://raw.githubusercontent.com/JD-YH03D/BintangToba/main/icon.svg
-// @downloadURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js
-// @updateURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.meta.js
 // ==/UserScript==
 
 /* global google, L */
@@ -574,7 +572,7 @@ AUTO PIN MODE:
                             }
                         }
                     } catch (e) {
-                        Logger.debug('XHR intercept parse warning:', e?.message || 'unknown');
+
                     }
                 });
             }
@@ -1277,76 +1275,76 @@ AUTO PIN MODE:
                 }
                 .btp-btn-secondary:active { transform: translateY(0); }
             `;
-                document.head.appendChild(style);
-            }
-
-            root = document.createElement('div');
-            root.id = PROTECTION_OVERLAY_ID;
-            root.style.cssText = [
-                'position:fixed',
-                'inset:0',
-                'z-index:2147483646',
-                'display:flex',
-                'align-items:center',
-                'justify-content:center',
-                'background:rgba(8, 10, 19, 0.8)',
-                'backdrop-filter:blur(16px)',
-                '-webkit-backdrop-filter:blur(16px)',
-                'animation:btpFadeIn .3s cubic-bezier(0.16, 1, 0.3, 1)',
-                'padding:20px'
-            ].join(';');
-
-            root.innerHTML =
-                '<div style="width:min(580px,100%); background:linear-gradient(180deg, #0f1424 0%, #090d1a 100%); border:1px solid rgba(59, 130, 246, 0.2); border-radius:24px; box-shadow:0 30px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding:32px; color:#f1f5f9; font-family:system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; animation:btpScaleIn .4s cubic-bezier(0.16, 1, 0.3, 1); box-sizing:border-box;">' +
-                    '<div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;">' +
-                        '<div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:20px; box-shadow:0 0 20px rgba(239, 68, 68, 0.3); flex-shrink:0;">' +
-                            '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' +
-                        '</div>' +
-                        '<div style="flex:1;">' +
-                            '<div style="font-size:20px; font-weight:700; letter-spacing:-0.2px; color:#ffffff; margin-bottom:4px;">Bintang Toba Pro Integrity</div>' +
-                            '<div id="btp-protection-subtitle" style="font-size:13px; font-weight:500; color:#3b82f6; text-transform:uppercase; letter-spacing:0.5px;"></div>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div id="btp-protection-reason" style="font-size:14px; line-height:1.6; color:#94a3b8; background:rgba(30, 41, 59, 0.3); border:1px solid rgba(255,255,255,0.03); padding:16px; border-radius:14px; margin-bottom:24px;"></div>' +
-                    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px;">' +
-                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
-                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Current Version</div>' +
-                            '<div id="btp-protection-current" style="font-size:15px; font-weight:600; color:#f8fafc; font-family:monospace;"></div>' +
-                        '</div>' +
-                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
-                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Latest Official</div>' +
-                            '<div id="btp-protection-latest" style="font-size:15px; font-weight:600; color:#10b981; font-family:monospace;"></div>' +
-                        '</div>' +
-                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:16px; grid-column:span 2;">' +
-                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Integrity Status</div>' +
-                            '<div id="btp-protection-integrity" style="font-size:15px; font-weight:600; color:#f43f5e; margin-bottom:6px;"></div>' +
-                            '<div id="btp-protection-message" style="font-size:13px; color:#94a3b8; line-height:1.4;"></div>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div style="display:flex; gap:12px; flex-wrap:wrap;">' +
-                        '<button id="btp-protection-update" class="btp-btn-primary">Update Official Build</button>' +
-                        '<button id="btp-protection-github" class="btp-btn-secondary">Open GitHub Source</button>' +
-                    '</div>' +
-                '</div>';
-
-            document.body.appendChild(root);
-            telemetryInc('protection.overlayShows');
-
-            const updateBtn = root.querySelector('#btp-protection-update');
-            if (updateBtn) {
-                updateBtn.onclick = () => {
-                    const url = 'https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js';
-                    window.open(url, '_blank');
-                };
-            }
-
-            const githubBtn = root.querySelector('#btp-protection-github');
-            if (githubBtn) {
-                githubBtn.onclick = () => {
-                    window.open(getGithubProjectUrl(), '_blank');
-                };
-            }
+            document.head.appendChild(style);
         }
+
+        root = document.createElement('div');
+        root.id = PROTECTION_OVERLAY_ID;
+        root.style.cssText = [
+            'position:fixed',
+            'inset:0',
+            'z-index:2147483646',
+            'display:flex',
+            'align-items:center',
+            'justify-content:center',
+            'background:rgba(8, 10, 19, 0.8)',
+            'backdrop-filter:blur(16px)',
+            '-webkit-backdrop-filter:blur(16px)',
+            'animation:btpFadeIn .3s cubic-bezier(0.16, 1, 0.3, 1)',
+            'padding:20px'
+        ].join(';');
+
+        root.innerHTML =
+            '<div style="width:min(580px,100%); background:linear-gradient(180deg, #0f1424 0%, #090d1a 100%); border:1px solid rgba(59, 130, 246, 0.2); border-radius:24px; box-shadow:0 30px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding:32px; color:#f1f5f9; font-family:system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; animation:btpScaleIn .4s cubic-bezier(0.16, 1, 0.3, 1); box-sizing:border-box;">' +
+                '<div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;">' +
+                    '<div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:20px; box-shadow:0 0 20px rgba(239, 68, 68, 0.3); flex-shrink:0;">' +
+                        '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' +
+                    '</div>' +
+                    '<div style="flex:1;">' +
+                        '<div style="font-size:20px; font-weight:700; letter-spacing:-0.2px; color:#ffffff; margin-bottom:4px;">Bintang Toba Pro Integrity</div>' +
+                        '<div id="btp-protection-subtitle" style="font-size:13px; font-weight:500; color:#3b82f6; text-transform:uppercase; letter-spacing:0.5px;"></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div id="btp-protection-reason" style="font-size:14px; line-height:1.6; color:#94a3b8; background:rgba(30, 41, 59, 0.3); border:1px solid rgba(255,255,255,0.03); padding:16px; border-radius:14px; margin-bottom:24px;"></div>' +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px;">' +
+                    '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
+                        '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Current Version</div>' +
+                        '<div id="btp-protection-current" style="font-size:15px; font-weight:600; color:#f8fafc; font-family:monospace;"></div>' +
+                    '</div>' +
+                    '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
+                        '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Latest Official</div>' +
+                        '<div id="btp-protection-latest" style="font-size:15px; font-weight:600; color:#10b981; font-family:monospace;"></div>' +
+                    '</div>' +
+                    '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:16px; grid-column:span 2;">' +
+                        '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Integrity Status</div>' +
+                        '<div id="btp-protection-integrity" style="font-size:15px; font-weight:600; color:#f43f5e; margin-bottom:6px;"></div>' +
+                        '<div id="btp-protection-message" style="font-size:13px; color:#94a3b8; line-height:1.4;"></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex; gap:12px; flex-wrap:wrap;">' +
+                    '<button id="btp-protection-update" class="btp-btn-primary">Update Official Build</button>' +
+                    '<button id="btp-protection-github" class="btp-btn-secondary">Open GitHub Source</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(root);
+        telemetryInc('protection.overlayShows');
+
+        const updateBtn = root.querySelector('#btp-protection-update');
+        if (updateBtn) {
+            updateBtn.onclick = () => {
+                const url = 'https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js';
+                window.open(url, '_blank');
+            };
+        }
+
+        const githubBtn = root.querySelector('#btp-protection-github');
+        if (githubBtn) {
+            githubBtn.onclick = () => {
+                window.open(getGithubProjectUrl(), '_blank');
+            };
+        }
+    }
 
         const subtitle = root.querySelector('#btp-protection-subtitle');
         const reason = root.querySelector('#btp-protection-reason');
@@ -2036,7 +2034,7 @@ AUTO PIN MODE:
             if (fromReturn) return fromReturn;
 
         } catch (e) {
-            Logger.debug('walkFiber warning:', e?.message || 'unknown');
+
         }
         return null;
     }
@@ -2063,7 +2061,7 @@ AUTO PIN MODE:
                 }
             }
         } catch (e) {
-            Logger.debug('extractFromGoogleSV warning:', e?.message || 'unknown');
+
         }
         return null;
     }
@@ -2176,7 +2174,7 @@ AUTO PIN MODE:
                         return { lat: c2.lat, lng: c2.lng };
                     }
                 } catch (e) {
-                    Logger.debug('shadow_global_vars warning:', e?.message || 'unknown');
+
                 }
                 return null;
             });
@@ -3742,176 +3740,6 @@ AUTO PIN MODE:
     // [SECTION 23] KEYBOARD HANDLER
     // ========================================================================
 
-    function isEditableTarget(target) {
-        return !!target && (
-            target.tagName === 'INPUT' ||
-            target.tagName === 'TEXTAREA' ||
-            target.isContentEditable
-        );
-    }
-
-    function buildNormalizedHotkeyMap() {
-        const hotkeys = getHotkeys();
-        const hkMap = {};
-        for (const [action, hk] of Object.entries(hotkeys)) {
-            hkMap[action] = normalizeHotkey(hk);
-        }
-        return hkMap;
-    }
-
-    function resolveHotkeyAction(hkMap, key) {
-        const actionOrder = [
-            'panel',
-            'marker',
-            'refresh',
-            'info',
-            'copyCoords',
-            'googleMaps',
-            'autoPlace',
-            'safePlace',
-            'zoomIn',
-            'zoomOut',
-            'discord'
-        ];
-
-        for (const action of actionOrder) {
-            if (hkMap[action] && key === hkMap[action]) {
-                return action;
-            }
-        }
-        return null;
-    }
-
-    function handleGoogleMapsHotkey() {
-        const coords = extractCoordinates();
-        if (coords && Validators.isValidCoord(coords.lat, coords.lng)) {
-            const lat = Security.encodeParam(coords.lat.toFixed(6));
-            const lng = Security.encodeParam(coords.lng.toFixed(6));
-            const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}&ll=${lat},${lng}&z=6`;
-
-            try {
-                const newWindow = window.open(mapsUrl, '_blank');
-                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                    window.location.href = mapsUrl;
-                }
-            } catch (err) {
-                Logger.error('window.open error:', err);
-                window.location.href = mapsUrl;
-            }
-            return;
-        }
-
-        Logger.debug('No valid coordinates available');
-        updateStatusText('No coords', '#ef4444');
-    }
-
-    function handleMarkerPlacementHotkey(isSafe = false) {
-        if (state.features?.autoPin) {
-            placeGuessOnMap(!!isSafe);
-            return;
-        }
-
-        if (isSafe) {
-            const prev = !!state.features?.safeMode;
-            state.features.safeMode = true;
-            if (!state.gameMap) findMapInstance();
-            const ok = toggleMarker();
-            state.features.safeMode = prev;
-            updateStatusText(ok ? 'Safe Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
-            return;
-        }
-
-        if (!state.gameMap) findMapInstance();
-        const ok = toggleMarker();
-        updateStatusText(ok ? 'Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
-    }
-
-    function executeHotkeyAction(action, e) {
-        switch (action) {
-            case 'panel':
-                if (!Throttle.canRun('hk_toggle', CONFIG.COOLDOWNS.TOGGLE_PANEL)) return;
-                e.preventDefault();
-                togglePanel();
-                return;
-
-            case 'marker':
-                if (!Throttle.canRun('hk_marker', CONFIG.COOLDOWNS.MARKER)) return;
-                e.preventDefault();
-                if (!state.gameMap) findMapInstance();
-                toggleMarker();
-                return;
-
-            case 'refresh':
-                if (!state.infoVisible) return;
-                if (!Throttle.canRun('hk_refresh', CONFIG.COOLDOWNS.REFRESH)) return;
-                e.preventDefault();
-                e.stopPropagation();
-                refreshLocation();
-                return;
-
-            case 'info':
-                if (!Throttle.canRun('hk_info', CONFIG.COOLDOWNS.INFO)) return;
-                e.preventDefault();
-                e.stopPropagation();
-                openHomeQuick();
-                return;
-
-            case 'copyCoords':
-                if (!Throttle.canRun('hk_copy', CONFIG.COOLDOWNS.COPY)) return;
-                e.preventDefault();
-                const coords = extractCoordinates();
-                if (coords && Validators.isValidCoord(coords.lat, coords.lng)) {
-                    navigator.clipboard.writeText(`${coords.lat}, ${coords.lng}`)
-                        .then(() => Logger.debug('Coords copied'))
-                        .catch(() => Logger.debug('Clipboard failed'));
-                }
-                return;
-
-            case 'googleMaps':
-                if (!Throttle.canRun('hk_maps', CONFIG.COOLDOWNS.MAPS)) return;
-                e.preventDefault();
-                e.stopPropagation();
-                handleGoogleMapsHotkey();
-                return;
-
-            case 'autoPlace':
-                if (!Throttle.canRun('hk_auto_place', CONFIG.COOLDOWNS.AUTO_PLACE)) return;
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                handleMarkerPlacementHotkey(false);
-                return;
-
-            case 'safePlace':
-                if (!Throttle.canRun('hk_safe_place', CONFIG.COOLDOWNS.SAFE_PLACE)) return;
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                handleMarkerPlacementHotkey(true);
-                return;
-
-            case 'zoomIn':
-                if (!state.miniMapVisible) return;
-                if (!Throttle.canRun('hk_zoom_in', CONFIG.COOLDOWNS.ZOOM)) return;
-                e.preventDefault();
-                e.stopPropagation();
-                state.miniMap?.zoomIn();
-                return;
-
-            case 'zoomOut':
-                if (!state.miniMapVisible) return;
-                if (!Throttle.canRun('hk_zoom_out', CONFIG.COOLDOWNS.ZOOM)) return;
-                e.preventDefault();
-                e.stopPropagation();
-                state.miniMap?.zoomOut();
-                return;
-
-            case 'discord':
-                if (!Throttle.canRun('hk_discord', CONFIG.COOLDOWNS.DISCORD)) return;
-                e.preventDefault();
-                sendToDiscord();
-                return;
-        }
-    }
-
     function handleKeydown(e) {
         if (isProtectionBlocked()) {
             Logger.debug('[Integrity] Hotkey blocked by protection');
@@ -3919,7 +3747,7 @@ AUTO PIN MODE:
             return;
         }
 
-        if (isEditableTarget(e.target)) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
             return;
         }
 
@@ -3927,12 +3755,143 @@ AUTO PIN MODE:
         if (now - lastKeydownTime < CONFIG.TIMING.KEYDOWN_DEBOUNCE) return;
         lastKeydownTime = now;
 
+        const hotkeys = getHotkeys();
         const key = normalizeHotkey(e.key);
-        const hkMap = buildNormalizedHotkeyMap();
-        const action = resolveHotkeyAction(hkMap, key);
-        if (!action) return;
 
-        executeHotkeyAction(action, e);
+        const hkMap = {};
+        for (const [action, hk] of Object.entries(hotkeys)) {
+            hkMap[action] = normalizeHotkey(hk);
+        }
+
+        if (hkMap.panel && key === hkMap.panel) {
+            if (!Throttle.canRun('hk_toggle', CONFIG.COOLDOWNS.TOGGLE_PANEL)) return;
+            e.preventDefault();
+            togglePanel();
+            return;
+        }
+
+        if (hkMap.marker && key === hkMap.marker) {
+            if (!Throttle.canRun('hk_marker', CONFIG.COOLDOWNS.MARKER)) return;
+            e.preventDefault();
+            if (!state.gameMap) findMapInstance();
+            toggleMarker();
+            return;
+        }
+
+        if (hkMap.refresh && key === hkMap.refresh && state.infoVisible) {
+            if (!Throttle.canRun('hk_refresh', CONFIG.COOLDOWNS.REFRESH)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            refreshLocation();
+            return;
+        }
+
+        if (hkMap.info && key === hkMap.info) {
+            if (!Throttle.canRun('hk_info', CONFIG.COOLDOWNS.INFO)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            openHomeQuick();
+            return;
+        }
+
+        if (hkMap.copyCoords && key === hkMap.copyCoords) {
+            if (!Throttle.canRun('hk_copy', CONFIG.COOLDOWNS.COPY)) return;
+            e.preventDefault();
+            const coords = extractCoordinates();
+            if (coords && Validators.isValidCoord(coords.lat, coords.lng)) {
+                navigator.clipboard.writeText(`${coords.lat}, ${coords.lng}`)
+                    .then(() => Logger.debug('Coords copied'))
+                    .catch(() => Logger.debug('Clipboard failed'));
+            }
+            return;
+        }
+
+        if (hkMap.googleMaps && key === hkMap.googleMaps) {
+            if (!Throttle.canRun('hk_maps', CONFIG.COOLDOWNS.MAPS)) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const coords = extractCoordinates();
+            if (coords && Validators.isValidCoord(coords.lat, coords.lng)) {
+                const lat = Security.encodeParam(coords.lat.toFixed(6));
+                const lng = Security.encodeParam(coords.lng.toFixed(6));
+                const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}&ll=${lat},${lng}&z=6`;
+
+                try {
+                    const newWindow = window.open(mapsUrl, '_blank');
+                    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                        window.location.href = mapsUrl;
+                    }
+                } catch (err) {
+                    Logger.error('window.open error:', err);
+                    window.location.href = mapsUrl;
+                }
+            } else {
+                Logger.debug('No valid coordinates available');
+                updateStatusText('No coords', '#ef4444');
+            }
+            return;
+        }
+
+        if (hkMap.autoPlace && key === hkMap.autoPlace) {
+            if (!Throttle.canRun('hk_auto_place', CONFIG.COOLDOWNS.AUTO_PLACE)) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            if (state.features?.autoPin) {
+
+                placeGuessOnMap(false);
+            } else {
+
+                if (!state.gameMap) findMapInstance();
+                const ok = toggleMarker();
+                updateStatusText(ok ? 'Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
+            }
+            return;
+        }
+
+        if (hkMap.safePlace && key === hkMap.safePlace) {
+            if (!Throttle.canRun('hk_safe_place', CONFIG.COOLDOWNS.SAFE_PLACE)) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            if (state.features?.autoPin) {
+
+                placeGuessOnMap(true);
+            } else {
+
+                const prev = !!state.features?.safeMode;
+                state.features.safeMode = true;
+                if (!state.gameMap) findMapInstance();
+                const ok = toggleMarker();
+                state.features.safeMode = prev;
+                updateStatusText(ok ? 'Safe Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
+            }
+            return;
+        }
+
+        if (hkMap.zoomIn && key === hkMap.zoomIn && state.miniMapVisible) {
+            if (!Throttle.canRun('hk_zoom_in', CONFIG.COOLDOWNS.ZOOM)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            state.miniMap?.zoomIn();
+            return;
+        }
+
+        if (hkMap.zoomOut && key === hkMap.zoomOut && state.miniMapVisible) {
+            if (!Throttle.canRun('hk_zoom_out', CONFIG.COOLDOWNS.ZOOM)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            state.miniMap?.zoomOut();
+            return;
+        }
+
+        if (hkMap.discord && key === hkMap.discord) {
+            if (!Throttle.canRun('hk_discord', CONFIG.COOLDOWNS.DISCORD)) return;
+            e.preventDefault();
+            sendToDiscord();
+            return;
+        }
     }
 
     // ========================================================================
@@ -3942,150 +3901,6 @@ AUTO PIN MODE:
     let monitoringLastValidCoords = null;
     let monitoringFailCount = 0;
     let monitoringConsecutiveErrors = 0;
-
-    function removeActiveMarker() {
-        if (!state.marker) return;
-        try {
-            if (typeof google !== 'undefined' && google.maps && state.marker.setMap) {
-                state.marker.setMap(null);
-            } else if (typeof L !== 'undefined' && state.gameMap) {
-                state.gameMap.removeLayer(state.marker);
-            }
-        } catch (e) {
-            Logger.debug('Active marker removal warning:', e?.message || 'unknown');
-        }
-        state.marker = null;
-    }
-
-    function processMonitoringRoundTransition(coords) {
-        let isNewRound = !monitoringLastValidCoords;
-
-        Logger.debug('📍 New coordinates:', coords.lat.toFixed(6), coords.lng.toFixed(6));
-
-        if (monitoringLastValidCoords) {
-            const distance = Math.abs(coords.lat - monitoringLastValidCoords.lat) +
-                Math.abs(coords.lng - monitoringLastValidCoords.lng);
-            if (distance > CONFIG.MAP.NEW_ROUND_THRESHOLD) {
-                isNewRound = true;
-                Logger.info('New round detected');
-                state.markerPlacedThisRound = false;
-                state.address = null;
-                extractionCache.invalidate();
-                removeActiveMarker();
-            }
-        }
-
-        if (isNewRound) {
-            addRoundHistoryEntry(coords, state.address);
-        }
-        monitoringLastValidCoords = { lat: coords.lat, lng: coords.lng };
-    }
-
-    async function resolveMonitoringAddress(coords) {
-        try {
-            if (state.runtime?.flags?.USE_REQUEST_TOKENING) {
-                const addrToken = RequestTokens.issue('address_monitor');
-                telemetryInc('async.addressIssued');
-                const resolvedAddress = await lookupAddress(coords.lat, coords.lng);
-
-                if (RequestTokens.isCurrent('address_monitor', addrToken)) {
-                    if (applyAddressIfCurrent(coords, resolvedAddress)) {
-                        telemetryInc('async.addressApplied');
-                        Logger.debug('📮 Address:', formatAddress(state.address));
-                        syncLatestHistoryAddress(coords, resolvedAddress);
-                    }
-                } else {
-                    telemetryInc('async.addressDiscardedStale');
-                }
-                return;
-            }
-
-            const resolvedAddress = await lookupAddress(coords.lat, coords.lng);
-            if (applyAddressIfCurrent(coords, resolvedAddress)) {
-                Logger.debug('📮 Address:', formatAddress(state.address));
-                syncLatestHistoryAddress(coords, resolvedAddress);
-            }
-        } catch (e) {
-            Logger.debug('Address lookup failed:', e?.message || 'unknown');
-        }
-    }
-
-    function syncMonitoringUi() {
-        try {
-            if (state.infoVisible) {
-                updateInfoDisplay();
-            }
-            if (state.miniMapVisible && state.miniMap) {
-                updateMiniMap();
-            }
-        } catch (e) {
-            Logger.debug('Display update error:', e?.message);
-        }
-    }
-
-    function runMonitoringAutoActions(coords) {
-        try {
-            autoPlaceMarker();
-        } catch (e) {
-            Logger.debug('Auto marker error:', e?.message);
-        }
-
-        if (state.marker) {
-            try {
-                if (typeof google !== 'undefined' && state.marker.setPosition) {
-                    state.marker.setPosition(new google.maps.LatLng(coords.lat, coords.lng));
-                } else if (typeof L !== 'undefined' && state.marker.setLatLng) {
-                    state.marker.setLatLng([coords.lat, coords.lng]);
-                }
-            } catch (e) {
-                Logger.debug('Marker position update failed');
-            }
-        }
-
-        if (!state.gameMap) {
-            findMapInstance();
-        }
-    }
-
-    function handleMonitoringMissingCoords() {
-        monitoringFailCount++;
-        if (monitoringFailCount === 10) {
-            Logger.debug('⏳ Waiting for coordinates... (platform:', state.platform, ')');
-            monitoringFailCount = 0;
-
-            if (!XMLHttpRequest.prototype[XHR_PATCH_FLAG]) {
-                Logger.warn('XHR interceptor lost - reinstalling');
-                if (state.runtime?.flags?.USE_PATCH_MANAGER) {
-                    PatchManager.ensureXHRPatch();
-                } else {
-                    installXHRInterceptor();
-                }
-            }
-        }
-
-        if (monitoringFailCount % 20 === 5 && !state.gameMap) {
-            findMapInstance();
-        }
-    }
-
-    function shouldSkipMonitoringTick() {
-        monitoringTickCounter++;
-        const lowDemandMode = !state.infoVisible &&
-            !state.miniMapVisible &&
-            !state.features?.autoMarker &&
-            !state.features?.autoPin;
-        return lowDemandMode && (monitoringTickCounter % 3) !== 0;
-    }
-
-    async function handleMonitoringCoordsChange(coords) {
-        lastCoords = { lat: coords.lat, lng: coords.lng };
-        state.coords = { lat: coords.lat, lng: coords.lng };
-
-        processMonitoringRoundTransition(coords);
-        await resolveMonitoringAddress(coords);
-        syncMonitoringUi();
-        runMonitoringAutoActions(coords);
-    }
 
     function startMonitoring() {
         if (monitoringInterval) {
@@ -4110,7 +3925,12 @@ AUTO PIN MODE:
             monitoringBusy = true;
             monitoringBusySince = Date.now();
 
-            if (shouldSkipMonitoringTick()) {
+            monitoringTickCounter++;
+            const lowDemandMode = !state.infoVisible &&
+                !state.miniMapVisible &&
+                !state.features?.autoMarker &&
+                !state.features?.autoPin;
+            if (lowDemandMode && (monitoringTickCounter % 3) !== 0) {
                 monitoringBusy = false;
                 monitoringBusySince = 0;
                 return;
@@ -4125,10 +3945,121 @@ AUTO PIN MODE:
                     const changed = coords.lat !== lastCoords.lat || coords.lng !== lastCoords.lng;
 
                     if (changed) {
-                        await handleMonitoringCoordsChange(coords);
+                        lastCoords = { lat: coords.lat, lng: coords.lng };
+                        state.coords = { lat: coords.lat, lng: coords.lng };
+
+                        let isNewRound = !monitoringLastValidCoords;
+
+                        Logger.debug('📍 New coordinates:', coords.lat.toFixed(6), coords.lng.toFixed(6));
+
+                        if (monitoringLastValidCoords) {
+                            const distance = Math.abs(coords.lat - monitoringLastValidCoords.lat) +
+                                  Math.abs(coords.lng - monitoringLastValidCoords.lng);
+                            if (distance > CONFIG.MAP.NEW_ROUND_THRESHOLD) {
+                                isNewRound = true;
+                                Logger.info('New round detected');
+                                state.markerPlacedThisRound = false;
+                                state.address = null; // reset address for new round
+                                extractionCache.invalidate();
+
+                                if (state.marker) {
+                                    try {
+                                        if (typeof google !== 'undefined' && google.maps && state.marker.setMap) {
+                                            state.marker.setMap(null);
+                                        } else if (typeof L !== 'undefined' && state.gameMap) {
+                                            state.gameMap.removeLayer(state.marker);
+                                        }
+                                    } catch (e) {
+
+                                    }
+                                    state.marker = null;
+                                }
+                            }
+                        }
+
+                        if (isNewRound) {
+                            addRoundHistoryEntry(coords, state.address);
+                        }
+                        monitoringLastValidCoords = { lat: coords.lat, lng: coords.lng };
+
+                        try {
+                            if (state.runtime?.flags?.USE_REQUEST_TOKENING) {
+                                const addrToken = RequestTokens.issue('address_monitor');
+                                telemetryInc('async.addressIssued');
+                                const resolvedAddress = await lookupAddress(coords.lat, coords.lng);
+
+                                if (RequestTokens.isCurrent('address_monitor', addrToken)) {
+                                    if (applyAddressIfCurrent(coords, resolvedAddress)) {
+                                        telemetryInc('async.addressApplied');
+                                        Logger.debug('📮 Address:', formatAddress(state.address));
+                                        syncLatestHistoryAddress(coords, resolvedAddress);
+                                    }
+                                } else {
+                                    telemetryInc('async.addressDiscardedStale');
+                                }
+                            } else {
+                                const resolvedAddress = await lookupAddress(coords.lat, coords.lng);
+                                if (applyAddressIfCurrent(coords, resolvedAddress)) {
+                                    Logger.debug('📮 Address:', formatAddress(state.address));
+                                    syncLatestHistoryAddress(coords, resolvedAddress);
+                                }
+                            }
+                        } catch (e) {
+                            Logger.debug('Address lookup failed:', e?.message || 'unknown');
+                        }
+
+                        try {
+                            if (state.infoVisible) {
+                                updateInfoDisplay();
+                            }
+                            if (state.miniMapVisible && state.miniMap) {
+                                updateMiniMap();
+                            }
+                        } catch (e) {
+                            Logger.debug('Display update error:', e?.message);
+                        }
+
+                        try {
+                            autoPlaceMarker();
+                        } catch (e) {
+                            Logger.debug('Auto marker error:', e?.message);
+                        }
+
+                        if (state.marker) {
+                            try {
+                                if (typeof google !== 'undefined' && state.marker.setPosition) {
+                                    state.marker.setPosition(new google.maps.LatLng(coords.lat, coords.lng));
+                                } else if (typeof L !== 'undefined' && state.marker.setLatLng) {
+                                    state.marker.setLatLng([coords.lat, coords.lng]);
+                                }
+                            } catch (e) {
+                                Logger.debug('Marker position update failed');
+                            }
+                        }
+
+                        if (!state.gameMap) {
+                            findMapInstance();
+                        }
                     }
                 } else {
-                    handleMonitoringMissingCoords();
+                    monitoringFailCount++;
+                    if (monitoringFailCount === 10) {
+                        Logger.debug('⏳ Waiting for coordinates... (platform:', state.platform, ')');
+                        monitoringFailCount = 0;
+
+                        if (!XMLHttpRequest.prototype[XHR_PATCH_FLAG]) {
+                            Logger.warn('XHR interceptor lost - reinstalling');
+                            if (state.runtime?.flags?.USE_PATCH_MANAGER) {
+                                PatchManager.ensureXHRPatch();
+                            } else {
+                                installXHRInterceptor();
+                            }
+                        }
+                    }
+
+                    if (monitoringFailCount % 20 === 5 && !state.gameMap) {
+                        findMapInstance();
+                    }
                 }
             } catch (e) {
                 monitoringConsecutiveErrors++;
@@ -4161,13 +4092,11 @@ AUTO PIN MODE:
 
     function cacheOriginalInlineStyles(root) {
         if (!root) return;
-        if (root.dataset.geohelperStylesCached === '1') return;
         root.querySelectorAll('[style]').forEach((el) => {
             if (!el.dataset.geohelperBaseStyle) {
                 el.dataset.geohelperBaseStyle = el.getAttribute('style') || '';
             }
         });
-        root.dataset.geohelperStylesCached = '1';
     }
 
     function applyOneUiAppViews(root, force = false) {
@@ -5567,7 +5496,7 @@ AUTO PIN MODE:
             const pw = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
             delete pw.__btpDebug;
         } catch (e) {
-            Logger.debug('uninstallDebugBridge warning:', e?.message || 'unknown');
+
         }
     }
 
@@ -5745,7 +5674,7 @@ AUTO PIN MODE:
                     state.gameMap.removeLayer(state.marker);
                 }
             } catch (e) {
-                Logger.debug('Cleanup marker removal warning:', e?.message || 'unknown');
+
             }
             state.marker = null;
         }
@@ -5754,7 +5683,7 @@ AUTO PIN MODE:
             try {
                 state.miniMap.removeLayer(state.miniMapMarker);
             } catch (e) {
-                Logger.debug('Cleanup minimap marker removal warning:', e?.message || 'unknown');
+
             }
             state.miniMapMarker = null;
         }
@@ -5764,7 +5693,7 @@ AUTO PIN MODE:
                 state.miniMap.off();
                 state.miniMap.remove();
             } catch (e) {
-                Logger.debug('Cleanup minimap destroy warning:', e?.message || 'unknown');
+
             }
             state.miniMap = null;
             state.miniMapTileLayer = null;
