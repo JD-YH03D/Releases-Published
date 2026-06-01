@@ -22,6 +22,8 @@
 // @connect      npoint.io
 // @run-at       document-idle
 // @icon         https://raw.githubusercontent.com/JD-YH03D/BintangToba/main/icon.svg
+// @downloadURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js
+// @updateURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.meta.js
 // ==/UserScript==
 
 /* global google, L */
@@ -66,7 +68,7 @@ AUTO PIN MODE:
  * - Safe mode for anti-detection
  * @ __btpDebug.getProtectionState()
  * @author Bintang Toba Pro
- * @version 2.1.0
+ * @version 2.1.1
  * @license MIT
  * ============================================================================
  */
@@ -91,7 +93,7 @@ AUTO PIN MODE:
         NOMINATIM_URL: 'https://nominatim.openstreetmap.org/reverse',
         LEAFLET_CSS: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
         LEAFLET_JS: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-        VERSION_METADATA_URL: 'https://api.npoint.io/4377b6688ee95de1f1ce',
+        VERSION_METADATA_URL: 'https://api.npoint.io/65be7341bb21bbcf9458',
 
         STORAGE_KEYS: Object.freeze({
             DISCORD_WEBHOOK: 'bintang_toba_discord_webhook',
@@ -345,6 +347,17 @@ AUTO PIN MODE:
 
     let addressQueue = [];
     let addressProcessing = false;
+    let monitoringTickCounter = 0;
+
+    const uiRenderCache = {
+        locationHtml: '',
+        historySignature: '',
+        statusText: '',
+        statusColor: '',
+        badgeText: '',
+        badgeBg: '',
+        ledStatus: ''
+    };
 
     // ========================================================================
     // [SECTION 3-B] PHASE 1 TELEMETRY SKELETON
@@ -561,7 +574,7 @@ AUTO PIN MODE:
                             }
                         }
                     } catch (e) {
-
+                        Logger.debug('XHR intercept parse warning:', e?.message || 'unknown');
                     }
                 });
             }
@@ -1264,85 +1277,76 @@ AUTO PIN MODE:
                 }
                 .btp-btn-secondary:active { transform: translateY(0); }
             `;
-            document.head.appendChild(style);
+                document.head.appendChild(style);
+            }
+
+            root = document.createElement('div');
+            root.id = PROTECTION_OVERLAY_ID;
+            root.style.cssText = [
+                'position:fixed',
+                'inset:0',
+                'z-index:2147483646',
+                'display:flex',
+                'align-items:center',
+                'justify-content:center',
+                'background:rgba(8, 10, 19, 0.8)',
+                'backdrop-filter:blur(16px)',
+                '-webkit-backdrop-filter:blur(16px)',
+                'animation:btpFadeIn .3s cubic-bezier(0.16, 1, 0.3, 1)',
+                'padding:20px'
+            ].join(';');
+
+            root.innerHTML =
+                '<div style="width:min(580px,100%); background:linear-gradient(180deg, #0f1424 0%, #090d1a 100%); border:1px solid rgba(59, 130, 246, 0.2); border-radius:24px; box-shadow:0 30px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding:32px; color:#f1f5f9; font-family:system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; animation:btpScaleIn .4s cubic-bezier(0.16, 1, 0.3, 1); box-sizing:border-box;">' +
+                    '<div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;">' +
+                        '<div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:20px; box-shadow:0 0 20px rgba(239, 68, 68, 0.3); flex-shrink:0;">' +
+                            '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' +
+                        '</div>' +
+                        '<div style="flex:1;">' +
+                            '<div style="font-size:20px; font-weight:700; letter-spacing:-0.2px; color:#ffffff; margin-bottom:4px;">Bintang Toba Pro Integrity</div>' +
+                            '<div id="btp-protection-subtitle" style="font-size:13px; font-weight:500; color:#3b82f6; text-transform:uppercase; letter-spacing:0.5px;"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div id="btp-protection-reason" style="font-size:14px; line-height:1.6; color:#94a3b8; background:rgba(30, 41, 59, 0.3); border:1px solid rgba(255,255,255,0.03); padding:16px; border-radius:14px; margin-bottom:24px;"></div>' +
+                    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px;">' +
+                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
+                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Current Version</div>' +
+                            '<div id="btp-protection-current" style="font-size:15px; font-weight:600; color:#f8fafc; font-family:monospace;"></div>' +
+                        '</div>' +
+                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
+                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Latest Official</div>' +
+                            '<div id="btp-protection-latest" style="font-size:15px; font-weight:600; color:#10b981; font-family:monospace;"></div>' +
+                        '</div>' +
+                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:16px; grid-column:span 2;">' +
+                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Integrity Status</div>' +
+                            '<div id="btp-protection-integrity" style="font-size:15px; font-weight:600; color:#f43f5e; margin-bottom:6px;"></div>' +
+                            '<div id="btp-protection-message" style="font-size:13px; color:#94a3b8; line-height:1.4;"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:flex; gap:12px; flex-wrap:wrap;">' +
+                        '<button id="btp-protection-update" class="btp-btn-primary">Update Official Build</button>' +
+                        '<button id="btp-protection-github" class="btp-btn-secondary">Open GitHub Source</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(root);
+            telemetryInc('protection.overlayShows');
+
+            const updateBtn = root.querySelector('#btp-protection-update');
+            if (updateBtn) {
+                updateBtn.onclick = () => {
+                    const url = 'https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js';
+                    window.open(url, '_blank');
+                };
+            }
+
+            const githubBtn = root.querySelector('#btp-protection-github');
+            if (githubBtn) {
+                githubBtn.onclick = () => {
+                    window.open(getGithubProjectUrl(), '_blank');
+                };
+            }
         }
-
-        root = document.createElement('div');
-        root.id = PROTECTION_OVERLAY_ID;
-        root.style.cssText = [
-            'position:fixed',
-            'inset:0',
-            'z-index:2147483646',
-            'display:flex',
-            'align-items:center',
-            'justify-content:center',
-            'background:rgba(8, 10, 19, 0.8)',
-            'backdrop-filter:blur(16px)',
-            '-webkit-backdrop-filter:blur(16px)',
-            'animation:btpFadeIn .3s cubic-bezier(0.16, 1, 0.3, 1)',
-            'padding:20px'
-        ].join(';');
-
-        root.innerHTML = `
-            <div style="width:min(580px,100%); background:linear-gradient(180deg, #0f1424 0%, #090d1a 100%); border:1px solid rgba(59, 130, 246, 0.2); border-radius:24px; box-shadow:0 30px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding:32px; color:#f1f5f9; font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; animation:btpScaleIn .4s cubic-bezier(0.16, 1, 0.3, 1); box-sizing:border-box;">
-
-                <!-- Header Section -->
-                <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;">
-                    <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:20px; box-shadow:0 0 20px rgba(239, 68, 68, 0.3); flex-shrink:0;">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    </div>
-                    <div style="flex:1;">
-                        <div style="font-size:20px; font-weight:700; letter-spacing:-0.2px; color:#ffffff; margin-bottom:4px;">Bintang Toba Pro Integrity</div>
-                        <div id="btp-protection-subtitle" style="font-size:13px; font-weight:500; color:#3b82f6; text-transform:uppercase; letter-spacing:0.5px;"></div>
-                    </div>
-                </div>
-
-                <!-- Reason/Description Box -->
-                <div id="btp-protection-reason" style="font-size:14px; line-height:1.6; color:#94a3b8; background:rgba(30, 41, 59, 0.3); border:1px solid rgba(255,255,255,0.03); padding:16px; border-radius:14px; margin-bottom:24px;"></div>
-
-                <!-- Info Grid Status -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px;">
-                    <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">
-                        <div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Current Version</div>
-                        <div id="btp-protection-current" style="font-size:15px; font-weight:600; color:#f8fafc; font-family:monospace;"></div>
-                    </div>
-                    <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">
-                        <div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Latest Official</div>
-                        <div id="btp-protection-latest" style="font-size:15px; font-weight:600; color:#10b981; font-family:monospace;"></div>
-                    </div>
-                    <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:16px; grid-column:span 2;">
-                        <div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Integrity Status</div>
-                        <div id="btp-protection-integrity" style="font-size:15px; font-weight:600; color:#f43f5e; margin-bottom:6px;"></div>
-                        <div id="btp-protection-message" style="font-size:13px; color:#94a3b8; line-height:1.4;"></div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                    <button id="btp-protection-update" class="btp-btn-primary">Update Official Build</button>
-                    <button id="btp-protection-github" class="btp-btn-secondary">Open GitHub Source</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(root);
-        telemetryInc('protection.overlayShows');
-
-        const updateBtn = root.querySelector('#btp-protection-update');
-        if (updateBtn) {
-            updateBtn.onclick = () => {
-                const url = 'https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js';
-                window.open(url, '_blank');
-            };
-        }
-
-        const githubBtn = root.querySelector('#btp-protection-github');
-        if (githubBtn) {
-            githubBtn.onclick = () => {
-                window.open(getGithubProjectUrl(), '_blank');
-            };
-        }
-    }
 
         const subtitle = root.querySelector('#btp-protection-subtitle');
         const reason = root.querySelector('#btp-protection-reason');
@@ -2032,7 +2036,7 @@ AUTO PIN MODE:
             if (fromReturn) return fromReturn;
 
         } catch (e) {
-
+            Logger.debug('walkFiber warning:', e?.message || 'unknown');
         }
         return null;
     }
@@ -2059,7 +2063,7 @@ AUTO PIN MODE:
                 }
             }
         } catch (e) {
-
+            Logger.debug('extractFromGoogleSV warning:', e?.message || 'unknown');
         }
         return null;
     }
@@ -2172,7 +2176,7 @@ AUTO PIN MODE:
                         return { lat: c2.lat, lng: c2.lng };
                     }
                 } catch (e) {
-
+                    Logger.debug('shadow_global_vars warning:', e?.message || 'unknown');
                 }
                 return null;
             });
@@ -2546,6 +2550,30 @@ AUTO PIN MODE:
         return formatAddress(addressObj) || 'Unknown location';
     }
 
+    function isSameCoords(a, b, epsilon = 0.000001) {
+        if (!a || !b) return false;
+        if (!Validators.isValidCoord(a.lat, a.lng) || !Validators.isValidCoord(b.lat, b.lng)) return false;
+        return Math.abs(a.lat - b.lat) <= epsilon && Math.abs(a.lng - b.lng) <= epsilon;
+    }
+
+    function applyAddressIfCurrent(expectedCoords, addressObj) {
+        if (!expectedCoords || !Validators.isValidCoord(expectedCoords.lat, expectedCoords.lng)) return false;
+        const current = state.coords;
+        if (!isSameCoords(current, expectedCoords, 0.00001)) {
+            telemetryInc('async.addressDiscardedStale');
+            return false;
+        }
+        state.address = addressObj;
+        return true;
+    }
+
+    function syncLatestHistoryAddress(coords, addressObj) {
+        const latest = state.roundHistory[0];
+        if (!latest) return;
+        if (!isSameCoords({ lat: latest.lat, lng: latest.lng }, coords, 0.00001)) return;
+        latest.address = buildHistoryAddressLabel(addressObj);
+    }
+
     // ========================================================================
     // [SECTION 16] ROUND HISTORY MANAGEMENT
     // ========================================================================
@@ -2637,52 +2665,20 @@ AUTO PIN MODE:
             historyCount.textContent = `${count} round${count !== 1 ? 's' : ''}`;
         }
 
+        const signature = getHistoryRenderSignature();
+        if (uiRenderCache.historySignature === signature && historyList.children.length > 0) {
+            return;
+        }
+        uiRenderCache.historySignature = signature;
+
         if (count === 0) {
-            historyList.innerHTML = `
-                <div style="text-align:center;padding:40px 20px;">
-                    <div style="font-size:48px;margin-bottom:16px;opacity:0.5;">📭</div>
-                    <div style="color:#6b7280;font-size:14px;font-weight:500;margin-bottom:8px;">No History Yet</div>
-                    <div style="color:#9ca3af;font-size:12px;">Play a round to start tracking your locations</div>
-                </div>
-            `;
+            historyList.innerHTML = buildHistoryEmptyStateHtml();
             return;
         }
 
-        let html = `
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-                <button data-history-action="copy-latest" style="flex:1;min-width:80px;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📋 Copy Latest</button>
-                <button data-history-action="copy-all" style="flex:1;min-width:80px;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📄 Copy All</button>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-                <button data-history-action="export-json" style="flex:1;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">💾 JSON</button>
-                <button data-history-action="export-csv" style="flex:1;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📊 CSV</button>
-                <button data-history-action="import-json" style="flex:1;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📥 Import</button>
-                <button data-history-action="undo-import" style="flex:1;padding:10px;border:1px solid #d1d5db;background:${state.lastImportBackup ? '#fff' : '#f3f4f6'};color:${state.lastImportBackup ? '#111827' : '#9ca3af'};border-radius:10px;cursor:${state.lastImportBackup ? 'pointer' : 'not-allowed'};font-size:12px;font-weight:600;">↩️ Undo</button>
-            </div>
-        `;
-
-        html += '<div style="display:flex;flex-direction:column;gap:10px;">';
-
-        state.roundHistory.forEach((entry) => {
-            const time = new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const date = new Date(entry.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
-
-            html += `
-                <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);color:#fff;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">R${entry.round}</span>
-                            <span style="font-size:11px;color:#9ca3af;">${date} ${time}</span>
-                        </div>
-                        <button data-copy-entry="${entry.round}" style="background:#f3f4f6;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;">📋</button>
-                    </div>
-                    <div style="font-size:13px;color:#374151;line-height:1.4;margin-bottom:6px;font-weight:500;">${Security.escapeHtml(entry.address)}</div>
-                    <div style="font-family:monospace;font-size:12px;color:#6b7280;background:#f9fafb;padding:6px 10px;border-radius:8px;">${entry.lat.toFixed(6)}, ${entry.lng.toFixed(6)}</div>
-                </div>
-            `;
-        });
-
-        html += '</div>';
+        const cards = state.roundHistory.map((entry) => buildHistoryEntryCardHtml(entry)).join('');
+        const html = buildHistoryActionRowsHtml() +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' + cards + '</div>';
 
         historyList.innerHTML = html;
 
@@ -2705,32 +2701,17 @@ AUTO PIN MODE:
     function renderRoundHistoryHtml() {
         const hasRows = Array.isArray(state.roundHistory) && state.roundHistory.length > 0;
 
-        const rows = hasRows ? state.roundHistory.map((entry) => {
-            const time = new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            return `<div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;margin-bottom:8px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                    <span style="font-size:11px;color:#6b7280;font-weight:700;">ROUND ${entry.round}</span>
-                    <span style="font-size:11px;color:#9ca3af;">${time}</span>
-                </div>
-                <div style="font-size:12px;color:#374151;line-height:1.3;margin-bottom:4px;">${Security.escapeHtml(entry.address)}</div>
-                <div style="font-family:monospace;font-size:12px;color:#111827;">${entry.lat.toFixed(5)}, ${entry.lng.toFixed(5)}</div>
-            </div>`;
-        }).join('') : '<div style="padding:10px 12px;border:1px dashed #d1d5db;border-radius:10px;background:#fff;color:#6b7280;font-size:12px;">No round history yet. Play or import a session.</div>';
+        const rows = hasRows
+            ? buildRoundHistoryRowsHtml(state.roundHistory)
+            : '<div style="padding:10px 12px;border:1px dashed #d1d5db;border-radius:10px;background:#fff;color:#6b7280;font-size:12px;">No round history yet. Play or import a session.</div>';
 
-        return `<div style="margin-top:12px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <div style="font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Round History</div>
-                <div style="display:flex;gap:6px;">
-                    <button data-history-action="copy-latest" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">Copy Latest</button>
-                    <button data-history-action="copy-all" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">Copy All</button>
-                    <button data-history-action="export-json" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">JSON</button>
-                    <button data-history-action="export-csv" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">CSV</button>
-                    <button data-history-action="import-json" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">Import</button>
-                    <button data-history-action="undo-import" style="padding:6px 10px;border:1px solid #d1d5db;background:${state.lastImportBackup ? '#fff' : '#f3f4f6'};color:${state.lastImportBackup ? '#111827' : '#9ca3af'};border-radius:8px;cursor:${state.lastImportBackup ? 'pointer' : 'not-allowed'};font-size:11px;">Undo</button>
-                </div>
-            </div>
-            <div>${rows}</div>
-        </div>`;
+        return '<div style="margin-top:12px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                '<div style="font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Round History</div>' +
+                buildRoundHistoryHeaderActionsHtml() +
+            '</div>' +
+            '<div>' + rows + '</div>' +
+        '</div>';
     }
 
     // ========================================================================
@@ -3480,22 +3461,29 @@ AUTO PIN MODE:
         const el = document.getElementById('geohelper-status-text');
         const refs = getUiRefs();
         const badge = refs.statusBadge;
+        const nextBadgeText = text.includes('Ready') ? '✓ Ready' :
+            text.includes('Refresh') ? '🔄 ' + text : text;
 
-        if (el) {
+        if (el && (uiRenderCache.statusText !== text || uiRenderCache.statusColor !== color)) {
             el.textContent = text;
             el.style.color = color;
         }
 
-        if (badge) {
-            badge.textContent = text.includes('Ready') ? '✓ Ready' :
-            text.includes('Refresh') ? '🔄 ' + text : text;
+        if (badge && (uiRenderCache.badgeText !== nextBadgeText || uiRenderCache.badgeBg !== color)) {
+            badge.textContent = nextBadgeText;
             badge.style.background = color;
         }
+
+        uiRenderCache.statusText = text;
+        uiRenderCache.statusColor = color;
+        uiRenderCache.badgeText = nextBadgeText;
+        uiRenderCache.badgeBg = color;
     }
 
     function updateLedIndicator(status) {
         const led = document.getElementById('geohelper-led-indicator');
         if (!led) return;
+        if (uiRenderCache.ledStatus === status) return;
 
         const colors = {
             ready: { bg: '#4ade80', shadow: '#4ade80' },
@@ -3508,6 +3496,7 @@ AUTO PIN MODE:
         const c = colors[status] || colors.ready;
         led.style.background = c.bg;
         led.style.boxShadow = `0 0 6px ${c.shadow}`;
+        uiRenderCache.ledStatus = status;
     }
 
     // ========================================================================
@@ -3584,13 +3573,18 @@ AUTO PIN MODE:
                         telemetryInc('async.addressIssued');
                         const addr = await lookupAddress(newCoords.lat, newCoords.lng);
                         if (RequestTokens.isCurrent('address_refresh', addrToken)) {
-                            state.address = addr;
-                            telemetryInc('async.addressApplied');
+                            if (applyAddressIfCurrent(newCoords, addr)) {
+                                telemetryInc('async.addressApplied');
+                                syncLatestHistoryAddress(newCoords, addr);
+                            }
                         } else {
                             telemetryInc('async.addressDiscardedStale');
                         }
                     } else {
-                        state.address = await lookupAddress(newCoords.lat, newCoords.lng);
+                        const addr = await lookupAddress(newCoords.lat, newCoords.lng);
+                        if (applyAddressIfCurrent(newCoords, addr)) {
+                            syncLatestHistoryAddress(newCoords, addr);
+                        }
                     }
                 } catch (e) {
                     Logger.debug('Address lookup failed after refresh');
@@ -3748,6 +3742,176 @@ AUTO PIN MODE:
     // [SECTION 23] KEYBOARD HANDLER
     // ========================================================================
 
+    function isEditableTarget(target) {
+        return !!target && (
+            target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable
+        );
+    }
+
+    function buildNormalizedHotkeyMap() {
+        const hotkeys = getHotkeys();
+        const hkMap = {};
+        for (const [action, hk] of Object.entries(hotkeys)) {
+            hkMap[action] = normalizeHotkey(hk);
+        }
+        return hkMap;
+    }
+
+    function resolveHotkeyAction(hkMap, key) {
+        const actionOrder = [
+            'panel',
+            'marker',
+            'refresh',
+            'info',
+            'copyCoords',
+            'googleMaps',
+            'autoPlace',
+            'safePlace',
+            'zoomIn',
+            'zoomOut',
+            'discord'
+        ];
+
+        for (const action of actionOrder) {
+            if (hkMap[action] && key === hkMap[action]) {
+                return action;
+            }
+        }
+        return null;
+    }
+
+    function handleGoogleMapsHotkey() {
+        const coords = extractCoordinates();
+        if (coords && Validators.isValidCoord(coords.lat, coords.lng)) {
+            const lat = Security.encodeParam(coords.lat.toFixed(6));
+            const lng = Security.encodeParam(coords.lng.toFixed(6));
+            const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}&ll=${lat},${lng}&z=6`;
+
+            try {
+                const newWindow = window.open(mapsUrl, '_blank');
+                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                    window.location.href = mapsUrl;
+                }
+            } catch (err) {
+                Logger.error('window.open error:', err);
+                window.location.href = mapsUrl;
+            }
+            return;
+        }
+
+        Logger.debug('No valid coordinates available');
+        updateStatusText('No coords', '#ef4444');
+    }
+
+    function handleMarkerPlacementHotkey(isSafe = false) {
+        if (state.features?.autoPin) {
+            placeGuessOnMap(!!isSafe);
+            return;
+        }
+
+        if (isSafe) {
+            const prev = !!state.features?.safeMode;
+            state.features.safeMode = true;
+            if (!state.gameMap) findMapInstance();
+            const ok = toggleMarker();
+            state.features.safeMode = prev;
+            updateStatusText(ok ? 'Safe Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
+            return;
+        }
+
+        if (!state.gameMap) findMapInstance();
+        const ok = toggleMarker();
+        updateStatusText(ok ? 'Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
+    }
+
+    function executeHotkeyAction(action, e) {
+        switch (action) {
+            case 'panel':
+                if (!Throttle.canRun('hk_toggle', CONFIG.COOLDOWNS.TOGGLE_PANEL)) return;
+                e.preventDefault();
+                togglePanel();
+                return;
+
+            case 'marker':
+                if (!Throttle.canRun('hk_marker', CONFIG.COOLDOWNS.MARKER)) return;
+                e.preventDefault();
+                if (!state.gameMap) findMapInstance();
+                toggleMarker();
+                return;
+
+            case 'refresh':
+                if (!state.infoVisible) return;
+                if (!Throttle.canRun('hk_refresh', CONFIG.COOLDOWNS.REFRESH)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                refreshLocation();
+                return;
+
+            case 'info':
+                if (!Throttle.canRun('hk_info', CONFIG.COOLDOWNS.INFO)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                openHomeQuick();
+                return;
+
+            case 'copyCoords':
+                if (!Throttle.canRun('hk_copy', CONFIG.COOLDOWNS.COPY)) return;
+                e.preventDefault();
+                const coords = extractCoordinates();
+                if (coords && Validators.isValidCoord(coords.lat, coords.lng)) {
+                    navigator.clipboard.writeText(`${coords.lat}, ${coords.lng}`)
+                        .then(() => Logger.debug('Coords copied'))
+                        .catch(() => Logger.debug('Clipboard failed'));
+                }
+                return;
+
+            case 'googleMaps':
+                if (!Throttle.canRun('hk_maps', CONFIG.COOLDOWNS.MAPS)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                handleGoogleMapsHotkey();
+                return;
+
+            case 'autoPlace':
+                if (!Throttle.canRun('hk_auto_place', CONFIG.COOLDOWNS.AUTO_PLACE)) return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                handleMarkerPlacementHotkey(false);
+                return;
+
+            case 'safePlace':
+                if (!Throttle.canRun('hk_safe_place', CONFIG.COOLDOWNS.SAFE_PLACE)) return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                handleMarkerPlacementHotkey(true);
+                return;
+
+            case 'zoomIn':
+                if (!state.miniMapVisible) return;
+                if (!Throttle.canRun('hk_zoom_in', CONFIG.COOLDOWNS.ZOOM)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                state.miniMap?.zoomIn();
+                return;
+
+            case 'zoomOut':
+                if (!state.miniMapVisible) return;
+                if (!Throttle.canRun('hk_zoom_out', CONFIG.COOLDOWNS.ZOOM)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                state.miniMap?.zoomOut();
+                return;
+
+            case 'discord':
+                if (!Throttle.canRun('hk_discord', CONFIG.COOLDOWNS.DISCORD)) return;
+                e.preventDefault();
+                sendToDiscord();
+                return;
+        }
+    }
+
     function handleKeydown(e) {
         if (isProtectionBlocked()) {
             Logger.debug('[Integrity] Hotkey blocked by protection');
@@ -3755,7 +3919,7 @@ AUTO PIN MODE:
             return;
         }
 
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        if (isEditableTarget(e.target)) {
             return;
         }
 
@@ -3763,143 +3927,12 @@ AUTO PIN MODE:
         if (now - lastKeydownTime < CONFIG.TIMING.KEYDOWN_DEBOUNCE) return;
         lastKeydownTime = now;
 
-        const hotkeys = getHotkeys();
         const key = normalizeHotkey(e.key);
+        const hkMap = buildNormalizedHotkeyMap();
+        const action = resolveHotkeyAction(hkMap, key);
+        if (!action) return;
 
-        const hkMap = {};
-        for (const [action, hk] of Object.entries(hotkeys)) {
-            hkMap[action] = normalizeHotkey(hk);
-        }
-
-        if (hkMap.panel && key === hkMap.panel) {
-            if (!Throttle.canRun('hk_toggle', CONFIG.COOLDOWNS.TOGGLE_PANEL)) return;
-            e.preventDefault();
-            togglePanel();
-            return;
-        }
-
-        if (hkMap.marker && key === hkMap.marker) {
-            if (!Throttle.canRun('hk_marker', CONFIG.COOLDOWNS.MARKER)) return;
-            e.preventDefault();
-            if (!state.gameMap) findMapInstance();
-            toggleMarker();
-            return;
-        }
-
-        if (hkMap.refresh && key === hkMap.refresh && state.infoVisible) {
-            if (!Throttle.canRun('hk_refresh', CONFIG.COOLDOWNS.REFRESH)) return;
-            e.preventDefault();
-            e.stopPropagation();
-            refreshLocation();
-            return;
-        }
-
-        if (hkMap.info && key === hkMap.info) {
-            if (!Throttle.canRun('hk_info', CONFIG.COOLDOWNS.INFO)) return;
-            e.preventDefault();
-            e.stopPropagation();
-            openHomeQuick();
-            return;
-        }
-
-        if (hkMap.copyCoords && key === hkMap.copyCoords) {
-            if (!Throttle.canRun('hk_copy', CONFIG.COOLDOWNS.COPY)) return;
-            e.preventDefault();
-            const coords = extractCoordinates();
-            if (coords && Validators.isValidCoord(coords.lat, coords.lng)) {
-                navigator.clipboard.writeText(`${coords.lat}, ${coords.lng}`)
-                    .then(() => Logger.debug('Coords copied'))
-                    .catch(() => Logger.debug('Clipboard failed'));
-            }
-            return;
-        }
-
-        if (hkMap.googleMaps && key === hkMap.googleMaps) {
-            if (!Throttle.canRun('hk_maps', CONFIG.COOLDOWNS.MAPS)) return;
-            e.preventDefault();
-            e.stopPropagation();
-
-            const coords = extractCoordinates();
-            if (coords && Validators.isValidCoord(coords.lat, coords.lng)) {
-                const lat = Security.encodeParam(coords.lat.toFixed(6));
-                const lng = Security.encodeParam(coords.lng.toFixed(6));
-                const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}&ll=${lat},${lng}&z=6`;
-
-                try {
-                    const newWindow = window.open(mapsUrl, '_blank');
-                    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                        window.location.href = mapsUrl;
-                    }
-                } catch (err) {
-                    Logger.error('window.open error:', err);
-                    window.location.href = mapsUrl;
-                }
-            } else {
-                Logger.debug('No valid coordinates available');
-                updateStatusText('No coords', '#ef4444');
-            }
-            return;
-        }
-
-        if (hkMap.autoPlace && key === hkMap.autoPlace) {
-            if (!Throttle.canRun('hk_auto_place', CONFIG.COOLDOWNS.AUTO_PLACE)) return;
-            e.preventDefault();
-            e.stopImmediatePropagation();
-
-            if (state.features?.autoPin) {
-
-                placeGuessOnMap(false);
-            } else {
-
-                if (!state.gameMap) findMapInstance();
-                const ok = toggleMarker();
-                updateStatusText(ok ? 'Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
-            }
-            return;
-        }
-
-        if (hkMap.safePlace && key === hkMap.safePlace) {
-            if (!Throttle.canRun('hk_safe_place', CONFIG.COOLDOWNS.SAFE_PLACE)) return;
-            e.preventDefault();
-            e.stopImmediatePropagation();
-
-            if (state.features?.autoPin) {
-
-                placeGuessOnMap(true);
-            } else {
-
-                const prev = !!state.features?.safeMode;
-                state.features.safeMode = true;
-                if (!state.gameMap) findMapInstance();
-                const ok = toggleMarker();
-                state.features.safeMode = prev;
-                updateStatusText(ok ? 'Safe Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
-            }
-            return;
-        }
-
-        if (hkMap.zoomIn && key === hkMap.zoomIn && state.miniMapVisible) {
-            if (!Throttle.canRun('hk_zoom_in', CONFIG.COOLDOWNS.ZOOM)) return;
-            e.preventDefault();
-            e.stopPropagation();
-            state.miniMap?.zoomIn();
-            return;
-        }
-
-        if (hkMap.zoomOut && key === hkMap.zoomOut && state.miniMapVisible) {
-            if (!Throttle.canRun('hk_zoom_out', CONFIG.COOLDOWNS.ZOOM)) return;
-            e.preventDefault();
-            e.stopPropagation();
-            state.miniMap?.zoomOut();
-            return;
-        }
-
-        if (hkMap.discord && key === hkMap.discord) {
-            if (!Throttle.canRun('hk_discord', CONFIG.COOLDOWNS.DISCORD)) return;
-            e.preventDefault();
-            sendToDiscord();
-            return;
-        }
+        executeHotkeyAction(action, e);
     }
 
     // ========================================================================
@@ -3910,6 +3943,150 @@ AUTO PIN MODE:
     let monitoringFailCount = 0;
     let monitoringConsecutiveErrors = 0;
 
+    function removeActiveMarker() {
+        if (!state.marker) return;
+        try {
+            if (typeof google !== 'undefined' && google.maps && state.marker.setMap) {
+                state.marker.setMap(null);
+            } else if (typeof L !== 'undefined' && state.gameMap) {
+                state.gameMap.removeLayer(state.marker);
+            }
+        } catch (e) {
+            Logger.debug('Active marker removal warning:', e?.message || 'unknown');
+        }
+        state.marker = null;
+    }
+
+    function processMonitoringRoundTransition(coords) {
+        let isNewRound = !monitoringLastValidCoords;
+
+        Logger.debug('📍 New coordinates:', coords.lat.toFixed(6), coords.lng.toFixed(6));
+
+        if (monitoringLastValidCoords) {
+            const distance = Math.abs(coords.lat - monitoringLastValidCoords.lat) +
+                Math.abs(coords.lng - monitoringLastValidCoords.lng);
+            if (distance > CONFIG.MAP.NEW_ROUND_THRESHOLD) {
+                isNewRound = true;
+                Logger.info('New round detected');
+                state.markerPlacedThisRound = false;
+                state.address = null;
+                extractionCache.invalidate();
+                removeActiveMarker();
+            }
+        }
+
+        if (isNewRound) {
+            addRoundHistoryEntry(coords, state.address);
+        }
+        monitoringLastValidCoords = { lat: coords.lat, lng: coords.lng };
+    }
+
+    async function resolveMonitoringAddress(coords) {
+        try {
+            if (state.runtime?.flags?.USE_REQUEST_TOKENING) {
+                const addrToken = RequestTokens.issue('address_monitor');
+                telemetryInc('async.addressIssued');
+                const resolvedAddress = await lookupAddress(coords.lat, coords.lng);
+
+                if (RequestTokens.isCurrent('address_monitor', addrToken)) {
+                    if (applyAddressIfCurrent(coords, resolvedAddress)) {
+                        telemetryInc('async.addressApplied');
+                        Logger.debug('📮 Address:', formatAddress(state.address));
+                        syncLatestHistoryAddress(coords, resolvedAddress);
+                    }
+                } else {
+                    telemetryInc('async.addressDiscardedStale');
+                }
+                return;
+            }
+
+            const resolvedAddress = await lookupAddress(coords.lat, coords.lng);
+            if (applyAddressIfCurrent(coords, resolvedAddress)) {
+                Logger.debug('📮 Address:', formatAddress(state.address));
+                syncLatestHistoryAddress(coords, resolvedAddress);
+            }
+        } catch (e) {
+            Logger.debug('Address lookup failed:', e?.message || 'unknown');
+        }
+    }
+
+    function syncMonitoringUi() {
+        try {
+            if (state.infoVisible) {
+                updateInfoDisplay();
+            }
+            if (state.miniMapVisible && state.miniMap) {
+                updateMiniMap();
+            }
+        } catch (e) {
+            Logger.debug('Display update error:', e?.message);
+        }
+    }
+
+    function runMonitoringAutoActions(coords) {
+        try {
+            autoPlaceMarker();
+        } catch (e) {
+            Logger.debug('Auto marker error:', e?.message);
+        }
+
+        if (state.marker) {
+            try {
+                if (typeof google !== 'undefined' && state.marker.setPosition) {
+                    state.marker.setPosition(new google.maps.LatLng(coords.lat, coords.lng));
+                } else if (typeof L !== 'undefined' && state.marker.setLatLng) {
+                    state.marker.setLatLng([coords.lat, coords.lng]);
+                }
+            } catch (e) {
+                Logger.debug('Marker position update failed');
+            }
+        }
+
+        if (!state.gameMap) {
+            findMapInstance();
+        }
+    }
+
+    function handleMonitoringMissingCoords() {
+        monitoringFailCount++;
+        if (monitoringFailCount === 10) {
+            Logger.debug('⏳ Waiting for coordinates... (platform:', state.platform, ')');
+            monitoringFailCount = 0;
+
+            if (!XMLHttpRequest.prototype[XHR_PATCH_FLAG]) {
+                Logger.warn('XHR interceptor lost - reinstalling');
+                if (state.runtime?.flags?.USE_PATCH_MANAGER) {
+                    PatchManager.ensureXHRPatch();
+                } else {
+                    installXHRInterceptor();
+                }
+            }
+        }
+
+        if (monitoringFailCount % 20 === 5 && !state.gameMap) {
+            findMapInstance();
+        }
+    }
+
+    function shouldSkipMonitoringTick() {
+        monitoringTickCounter++;
+        const lowDemandMode = !state.infoVisible &&
+            !state.miniMapVisible &&
+            !state.features?.autoMarker &&
+            !state.features?.autoPin;
+        return lowDemandMode && (monitoringTickCounter % 3) !== 0;
+    }
+
+    async function handleMonitoringCoordsChange(coords) {
+        lastCoords = { lat: coords.lat, lng: coords.lng };
+        state.coords = { lat: coords.lat, lng: coords.lng };
+
+        processMonitoringRoundTransition(coords);
+        await resolveMonitoringAddress(coords);
+        syncMonitoringUi();
+        runMonitoringAutoActions(coords);
+    }
+
     function startMonitoring() {
         if (monitoringInterval) {
             clearInterval(monitoringInterval);
@@ -3918,6 +4095,7 @@ AUTO PIN MODE:
         monitoringFailCount = 0;
         monitoringLastValidCoords = null;
         monitoringConsecutiveErrors = 0;
+        monitoringTickCounter = 0;
 
         monitoringInterval = setInterval(async () => {
 
@@ -3932,6 +4110,12 @@ AUTO PIN MODE:
             monitoringBusy = true;
             monitoringBusySince = Date.now();
 
+            if (shouldSkipMonitoringTick()) {
+                monitoringBusy = false;
+                monitoringBusySince = 0;
+                return;
+            }
+
             try {
                 const coords = extractCoordinates();
 
@@ -3941,130 +4125,10 @@ AUTO PIN MODE:
                     const changed = coords.lat !== lastCoords.lat || coords.lng !== lastCoords.lng;
 
                     if (changed) {
-                        lastCoords = { lat: coords.lat, lng: coords.lng };
-                        state.coords = { lat: coords.lat, lng: coords.lng };
-
-                        let isNewRound = !monitoringLastValidCoords;
-
-                        Logger.debug('📍 New coordinates:', coords.lat.toFixed(6), coords.lng.toFixed(6));
-
-                        if (monitoringLastValidCoords) {
-                            const distance = Math.abs(coords.lat - monitoringLastValidCoords.lat) +
-                                  Math.abs(coords.lng - monitoringLastValidCoords.lng);
-                            if (distance > CONFIG.MAP.NEW_ROUND_THRESHOLD) {
-                                isNewRound = true;
-                                Logger.info('New round detected');
-                                state.markerPlacedThisRound = false;
-                                state.address = null; // reset address for new round
-                                extractionCache.invalidate();
-
-                                if (state.marker) {
-                                    try {
-                                        if (typeof google !== 'undefined' && google.maps && state.marker.setMap) {
-                                            state.marker.setMap(null);
-                                        } else if (typeof L !== 'undefined' && state.gameMap) {
-                                            state.gameMap.removeLayer(state.marker);
-                                        }
-                                    } catch (e) {
-
-                                    }
-                                    state.marker = null;
-                                }
-                            }
-                        }
-
-                        if (isNewRound) {
-                            addRoundHistoryEntry(coords, state.address);
-                        }
-                        monitoringLastValidCoords = { lat: coords.lat, lng: coords.lng };
-
-                        try {
-                            if (state.runtime?.flags?.USE_REQUEST_TOKENING) {
-                                const addrToken = RequestTokens.issue('address_monitor');
-                                telemetryInc('async.addressIssued');
-                                const resolvedAddress = await lookupAddress(coords.lat, coords.lng);
-
-                                if (RequestTokens.isCurrent('address_monitor', addrToken)) {
-                                    state.address = resolvedAddress;
-                                    telemetryInc('async.addressApplied');
-                                    Logger.debug('📮 Address:', formatAddress(state.address));
-
-                                    const latest = state.roundHistory[0];
-                                    if (latest &&
-                                        Math.abs(latest.lat - coords.lat) < 0.00001 &&
-                                        Math.abs(latest.lng - coords.lng) < 0.00001) {
-                                        latest.address = buildHistoryAddressLabel(state.address);
-                                    }
-                                } else {
-                                    telemetryInc('async.addressDiscardedStale');
-                                }
-                            } else {
-                                state.address = await lookupAddress(coords.lat, coords.lng);
-                                Logger.debug('📮 Address:', formatAddress(state.address));
-
-                                const latest = state.roundHistory[0];
-                                if (latest &&
-                                    Math.abs(latest.lat - coords.lat) < 0.00001 &&
-                                    Math.abs(latest.lng - coords.lng) < 0.00001) {
-                                    latest.address = buildHistoryAddressLabel(state.address);
-                                }
-                            }
-                        } catch (e) {
-                            Logger.debug('Address lookup failed:', e?.message || 'unknown');
-                        }
-
-                        try {
-                            if (state.infoVisible) {
-                                updateInfoDisplay();
-                            }
-                            if (state.miniMapVisible && state.miniMap) {
-                                updateMiniMap();
-                            }
-                        } catch (e) {
-                            Logger.debug('Display update error:', e?.message);
-                        }
-
-                        try {
-                            autoPlaceMarker();
-                        } catch (e) {
-                            Logger.debug('Auto marker error:', e?.message);
-                        }
-
-                        if (state.marker) {
-                            try {
-                                if (typeof google !== 'undefined' && state.marker.setPosition) {
-                                    state.marker.setPosition(new google.maps.LatLng(coords.lat, coords.lng));
-                                } else if (typeof L !== 'undefined' && state.marker.setLatLng) {
-                                    state.marker.setLatLng([coords.lat, coords.lng]);
-                                }
-                            } catch (e) {
-                                Logger.debug('Marker position update failed');
-                            }
-                        }
-
-                        if (!state.gameMap) {
-                            findMapInstance();
-                        }
+                        await handleMonitoringCoordsChange(coords);
                     }
                 } else {
-                    monitoringFailCount++;
-                    if (monitoringFailCount === 10) {
-                        Logger.debug('⏳ Waiting for coordinates... (platform:', state.platform, ')');
-                        monitoringFailCount = 0;
-
-                        if (!XMLHttpRequest.prototype[XHR_PATCH_FLAG]) {
-                            Logger.warn('XHR interceptor lost - reinstalling');
-                            if (state.runtime?.flags?.USE_PATCH_MANAGER) {
-                                PatchManager.ensureXHRPatch();
-                            } else {
-                                installXHRInterceptor();
-                            }
-                        }
-                    }
-
-                    if (monitoringFailCount % 20 === 5 && !state.gameMap) {
-                        findMapInstance();
-                    }
+                    handleMonitoringMissingCoords();
                 }
             } catch (e) {
                 monitoringConsecutiveErrors++;
@@ -4097,11 +4161,13 @@ AUTO PIN MODE:
 
     function cacheOriginalInlineStyles(root) {
         if (!root) return;
+        if (root.dataset.geohelperStylesCached === '1') return;
         root.querySelectorAll('[style]').forEach((el) => {
             if (!el.dataset.geohelperBaseStyle) {
                 el.dataset.geohelperBaseStyle = el.getAttribute('style') || '';
             }
         });
+        root.dataset.geohelperStylesCached = '1';
     }
 
     function applyOneUiAppViews(root, force = false) {
@@ -4757,6 +4823,338 @@ AUTO PIN MODE:
         }
     }
 
+    // ========================================================================
+    // [SECTION 25-A] UI HTML BUILDERS
+    // ========================================================================
+
+    function buildPhoneStatusBarHtml() {
+        return '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<div id="geohelper-led-indicator" style="width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;transition:all 0.3s;"></div>' +
+            '<span id="geohelper-clock">12:00</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<span style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:0.3px;">' + Security.escapeHtml(CONFIG.NAME) + '</span>' +
+            '<div style="display:flex;gap:6px;align-items:center;">' +
+                '<span>📶</span>' +
+                '<span>📳</span>' +
+                '<span>🔋</span>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function buildMiniMapSectionHtml() {
+        return '<div id="geohelper-minimap" style="width:100%;height:100%;background:#cbd5e1;"></div>' +
+            '<div id="geohelper-status-badge" style="position:absolute;top:12px;left:12px;background:rgba(74,222,128,0.95);padding:4px 10px;border-radius:6px;font-size:11px;color:#064e3b;font-weight:800;cursor:pointer;z-index:1000;">✓ Ready</div>' +
+            '<div style="position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:4px;z-index:1000;">' +
+                '<div style="display:flex;flex-direction:column;gap:1px;box-shadow:0 2px 8px rgba(0,0,0,0.15);border-radius:18px;overflow:hidden;">' +
+                    '<button id="geohelper-zoom-in" style="width:36px;height:36px;background:#fff;border:none;color:#374151;cursor:pointer;font-size:18px;font-weight:bold;">+</button>' +
+                    '<button id="geohelper-zoom-out" style="width:36px;height:36px;background:#fff;border:none;color:#374151;cursor:pointer;font-size:18px;font-weight:bold;">−</button>' +
+                '</div>' +
+                '<div id="geohelper-zoom-level" style="background:rgba(255,255,255,0.9);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;color:#1f2937;text-align:center;">x2</div>' +
+            '</div>' +
+            '<div id="geohelper-coords-overlay" style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,0.9);padding:4px 10px;border-radius:6px;font-family:monospace;font-size:11px;color:#1f2937;font-weight:700;z-index:1000;">--, --</div>';
+    }
+
+    function buildLocationPlaceholderHtml() {
+        return '<div style="text-align:center;padding:20px 10px;">' +
+            '<div style="font-size:32px;margin-bottom:8px;">🌍</div>' +
+            '<div style="color:#d1d5db;font-size:13px;font-weight:500;">Waiting for location...</div>' +
+        '</div>';
+    }
+
+    function buildAppButtonHtml(app) {
+        return '<div class="geohelper-app-icon" data-bg="' + Security.escapeAttr(app.bg) + '" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:25px;background:' + app.bg + ';">' +
+            app.icon +
+        '</div>' +
+        '<span class="geohelper-app-label" style="font-size:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);">' + Security.escapeHtml(app.label) + '</span>';
+    }
+
+    function buildSettingsViewHtml() {
+        return '<div style="background:#fff;padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:12px;">' +
+            '<h2 style="margin:0;font-size:18px;font-weight:700;color:#111827;">Settings</h2>' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:16px;">' +
+            '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">' +
+                '<div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:14px;">🔴 SETTING MARKER</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+                    '<div><div style="font-weight:600;font-size:14px;">Auto Marker</div><div style="font-size:11px;color:#6b7280;">Off: Manual Marker, On: Auto Marker per round</div></div>' +
+                    '<label style="position:relative;display:inline-block;width:22px;height:22px;">' +
+                        '<input type="checkbox" id="geohelper-auto-marker"' + (state.features?.autoMarker ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">' +
+                        '<span id="geohelper-auto-marker-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>' +
+                        '<span id="geohelper-auto-marker-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>' +
+                    '</label>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+                    '<div><div style="font-weight:600;font-size:14px;">Auto Pin</div><div style="font-size:11px;color:#6b7280;">Off: place marker, On: pin guess on game map</div></div>' +
+                    '<label style="position:relative;display:inline-block;width:22px;height:22px;">' +
+                        '<input type="checkbox" id="geohelper-auto-pin"' + (state.features?.autoPin ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">' +
+                        '<span id="geohelper-auto-pin-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>' +
+                        '<span id="geohelper-auto-pin-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>' +
+                    '</label>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                    '<div><div style="font-weight:600;font-size:14px;">Safe Mode</div><div style="font-size:11px;color:#6b7280;">Random offset (4.5k+ pts)</div></div>' +
+                    '<label style="position:relative;display:inline-block;width:22px;height:22px;">' +
+                        '<input type="checkbox" id="geohelper-safe-mode"' + (state.features?.safeMode ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">' +
+                        '<span id="geohelper-safe-mode-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>' +
+                        '<span id="geohelper-safe-mode-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>' +
+                    '</label>' +
+                '</div>' +
+            '</div>' +
+            '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+                    '<div style="font-size:12px;color:#6b7280;font-weight:700;">⚡ Preset Mode</div>' +
+                    '<div id="geohelper-preset-status" style="font-size:10px;color:#4ade80;font-weight:800;">MODE: ' + String(state.currentPreset || '').toUpperCase() + '</div>' +
+                '</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
+                    '<button data-preset="exact" style="padding:10px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:700;">Exact</button>' +
+                    '<button data-preset="safe" style="padding:10px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:700;">Safe</button>' +
+                    '<button data-preset="stealth" style="padding:10px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:700;">Stealth</button>' +
+                '</div>' +
+            '</div>' +
+            '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+                    '<div style="font-size:12px;color:#6b7280;font-weight:700;">📐 UI Scale</div>' +
+                    '<div id="geohelper-scale-status" style="font-size:10px;color:#4ade80;font-weight:800;">SCALE: ' + String(state.uiScale || CONFIG.DEFAULTS.UI_SCALE).toUpperCase() + '</div>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                    '<div><div style="font-weight:600;font-size:14px;">Mode Compact</div><div style="font-size:11px;color:#6b7280;">Off: Normal, On: Compact</div></div>' +
+                    '<label style="position:relative;display:inline-block;width:22px;height:22px;">' +
+                        '<input type="checkbox" id="geohelper-ui-scale"' + (state.uiScale === 'compact' ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">' +
+                        '<span id="geohelper-ui-scale-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>' +
+                        '<span id="geohelper-ui-scale-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>' +
+                    '</label>' +
+                '</div>' +
+            '</div>' +
+            '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">' +
+                '<div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:12px;">🧰 Session Backup</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+                    '<button id="geohelper-export-session" style="padding:12px;background:#fff;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;">📤 Backup</button>' +
+                    '<button id="geohelper-import-session" style="padding:12px;background:#fff;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;">📥 Restore</button>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:40px;">' +
+                '<button id="geohelper-save" style="padding:14px;background:#1a73e8;color:#fff;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:14px;">💾 Save</button>' +
+                '<button id="geohelper-reset" style="padding:14px;background:#fff;color:#ef4444;border:2px solid #ef4444;border-radius:14px;cursor:pointer;font-weight:700;font-size:14px;">🔄 Reset</button>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function buildHotkeyRowsHtml(savedHotkeys) {
+        return Object.entries(CONFIG.DEFAULT_HOTKEYS).map(([hk, val]) => {
+            const label = Security.escapeHtml(hk.replace(/([A-Z])/g, ' $1'));
+            const desc = Security.escapeHtml(getHotkeyDescription(hk));
+            const value = Security.escapeAttr(savedHotkeys[hk] || val);
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;">' +
+                '<div><label style="font-size:13px;font-weight:600;text-transform:capitalize;">' + label + '</label><div style="font-size:10px;color:#9ca3af;">' + desc + '</div></div>' +
+                '<input type="text" maxlength="10" data-hotkey="' + hk + '" value="' + value + '" style="width:80px;text-align:center;padding:8px;border:2px solid #e5e7eb;border-radius:10px;font-size:12px;font-weight:700;color:#ec4899;">' +
+            '</div>';
+        }).join('');
+    }
+
+    function buildHotkeysViewHtml(savedHotkeys) {
+        const hotkeyRows = buildHotkeyRowsHtml(savedHotkeys);
+        return '<div style="background:linear-gradient(135deg, #ec4899 0%, #be185d 100%);padding:16px 20px;display:flex;align-items:center;gap:12px;">' +
+            '<h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">⌨️ Hotkeys</h2>' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:16px;">' +
+            '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">' +
+                '<div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:14px;">🎮 Key Bindings</div>' +
+                hotkeyRows +
+            '</div>' +
+            '<button id="geohelper-hotkeys-save" style="width:100%;padding:14px;background:linear-gradient(135deg, #ec4899 0%, #be185d 100%);color:#fff;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:14px;">💾 Save Hotkeys</button>' +
+        '</div>';
+    }
+
+    function buildDiscordViewHtml(savedWebhook) {
+        return '<div style="background:linear-gradient(135deg, #5865F2 0%, #4752c4 100%);padding:16px 20px;display:flex;align-items:center;gap:12px;">' +
+            '<h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">💬 Discord</h2>' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:16px;">' +
+            '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">' +
+                '<div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:12px;">🔗 Webhook URL</div>' +
+                '<input type="text" id="geohelper-discord-webhook" value="' + Security.escapeAttr(savedWebhook) + '" placeholder="https://discord.com/api/webhooks/..." style="width:100%;padding:14px;border:2px solid #e5e7eb;border-radius:12px;font-size:13px;">' +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+                '<button id="geohelper-discord-save" style="padding:14px;background:linear-gradient(135deg, #5865F2 0%, #4752c4 100%);color:#fff;border:none;border-radius:14px;cursor:pointer;font-weight:700;">💾 Save</button>' +
+                '<button id="geohelper-discord-test" style="padding:14px;background:#fff;color:#5865F2;border:2px solid #5865F2;border-radius:14px;cursor:pointer;font-weight:700;">🧪 Test</button>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function buildCopyViewHtml() {
+        return '<div style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);padding:16px 20px;display:flex;align-items:center;gap:12px;">' +
+            '<h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">📋 Copy</h2>' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:16px;">' +
+            '<div style="background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;">' +
+                '<div id="geohelper-copy-coords" style="font-family:monospace;font-size:16px;font-weight:600;text-align:center;padding:16px;background:#f9fafb;border-radius:12px;">Waiting for location...</div>' +
+            '</div>' +
+            '<button id="geohelper-copy-main" style="width:100%;padding:16px;background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);color:#fff;border:none;border-radius:16px;cursor:pointer;font-size:15px;font-weight:600;">📋 Copy Coordinates</button>' +
+        '</div>';
+    }
+
+    function buildMapsViewHtml() {
+        return '<div style="background:linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);padding:16px 20px;display:flex;align-items:center;gap:12px;">' +
+            '<h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">🗺️ Maps</h2>' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:16px;">' +
+            '<div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:16px;">' +
+                '<div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;font-size:13px;font-weight:600;">🎨 Map Layer Style</div>' +
+                '<button data-map-layer="default" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-default" style="width:10px;height:10px;border-radius:50%;"></div></div><span style="font-size:15px;">OpenStreetMap</span></button>' +
+                '<button data-map-layer="dark" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-dark" style="width:10px;height:10px;border-radius:50%;"></div></div><span style="font-size:15px;">Carto Dark</span></button>' +
+                '<button data-map-layer="light" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-light" style="width:10px;height:10px;border-radius:50%;"></div></div><span style="font-size:15px;">Carto Light</span></button>' +
+                '<button data-map-layer="terrain" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-terrain" style="width:10px;height:10px;border-radius:50%;"></div></div><span style="font-size:15px;">OpenTopoMap</span></button>' +
+                '<button data-map-layer="voyager" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-voyager" style="width:10px;height:10px;border-radius:50%;"></div></div><span style="font-size:15px;">Voyager</span></button>' +
+                '<button data-map-layer="positron" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-positron" style="width:10px;height:10px;border-radius:50%;"></div></div><span style="font-size:15px;">Positron</span></button>' +
+                '<button data-map-layer="satellite" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-satellite" style="width:10px;height:10px;border-radius:50%;"></div></div><span style="font-size:15px;">ESRI Satellite</span></button>' +
+                '<button data-map-layer="hybrid" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;cursor:pointer;text-align:left;"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-hybrid" style="width:10px;height:10px;border-radius:50%;"></div></div><span style="font-size:15px;">Satellite Hybrid</span></button>' +
+            '</div>' +
+            '<div id="geohelper-open-gmaps" style="background:#fff;border-radius:16px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px;">' +
+                '<div style="width:44px;height:44px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">🌐</div>' +
+                '<div style="flex:1;"><div style="font-size:15px;font-weight:500;">Open in Google Maps</div><div style="font-size:13px;color:#6b7280;">View current location</div></div>' +
+                '<span style="font-size:20px;color:#9ca3af;">›</span>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function buildHistoryViewHtml() {
+        return '<div style="background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">' +
+            '<div style="display:flex;align-items:center;gap:12px;">' +
+                '<h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">📜 History</h2>' +
+            '</div>' +
+            '<div id="geohelper-history-count" style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:12px;font-size:11px;color:#fff;font-weight:600;">0 rounds</div>' +
+        '</div>' +
+        '<div id="geohelper-history-content" style="flex:1;overflow-y:auto;padding:16px;">' +
+            '<div id="geohelper-history-list"></div>' +
+        '</div>';
+    }
+
+    function buildHistoryEmptyStateHtml() {
+        return '<div style="text-align:center;padding:40px 20px;">' +
+            '<div style="font-size:48px;margin-bottom:16px;opacity:0.5;">📭</div>' +
+            '<div style="color:#6b7280;font-size:14px;font-weight:500;margin-bottom:8px;">No History Yet</div>' +
+            '<div style="color:#9ca3af;font-size:12px;">Play a round to start tracking your locations</div>' +
+        '</div>';
+    }
+
+    function buildHistoryActionRowsHtml() {
+        const undoEnabled = !!state.lastImportBackup;
+        const undoBg = undoEnabled ? '#fff' : '#f3f4f6';
+        const undoColor = undoEnabled ? '#111827' : '#9ca3af';
+        const undoCursor = undoEnabled ? 'pointer' : 'not-allowed';
+
+        return '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">' +
+            '<button data-history-action="copy-latest" style="flex:1;min-width:80px;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📋 Copy Latest</button>' +
+            '<button data-history-action="copy-all" style="flex:1;min-width:80px;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📄 Copy All</button>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">' +
+            '<button data-history-action="export-json" style="flex:1;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">💾 JSON</button>' +
+            '<button data-history-action="export-csv" style="flex:1;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📊 CSV</button>' +
+            '<button data-history-action="import-json" style="flex:1;padding:10px;border:1px solid #d1d5db;background:#fff;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📥 Import</button>' +
+            '<button data-history-action="undo-import" style="flex:1;padding:10px;border:1px solid #d1d5db;background:' + undoBg + ';color:' + undoColor + ';border-radius:10px;cursor:' + undoCursor + ';font-size:12px;font-weight:600;">↩️ Undo</button>' +
+        '</div>';
+    }
+
+    function buildHistoryEntryCardHtml(entry) {
+        const time = new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const date = new Date(entry.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
+        const safeAddress = Security.escapeHtml(entry.address);
+
+        return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                '<div style="display:flex;align-items:center;gap:8px;">' +
+                    '<span style="background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);color:#fff;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">R' + entry.round + '</span>' +
+                    '<span style="font-size:11px;color:#9ca3af;">' + date + ' ' + time + '</span>' +
+                '</div>' +
+                '<button data-copy-entry="' + entry.round + '" style="background:#f3f4f6;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;">📋</button>' +
+            '</div>' +
+            '<div style="font-size:13px;color:#374151;line-height:1.4;margin-bottom:6px;font-weight:500;">' + safeAddress + '</div>' +
+            '<div style="font-family:monospace;font-size:12px;color:#6b7280;background:#f9fafb;padding:6px 10px;border-radius:8px;">' + entry.lat.toFixed(6) + ', ' + entry.lng.toFixed(6) + '</div>' +
+        '</div>';
+    }
+
+    function buildRoundHistoryRowsHtml(history) {
+        return history.map((entry) => {
+            const time = new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return '<div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;margin-bottom:8px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+                    '<span style="font-size:11px;color:#6b7280;font-weight:700;">ROUND ' + entry.round + '</span>' +
+                    '<span style="font-size:11px;color:#9ca3af;">' + time + '</span>' +
+                '</div>' +
+                '<div style="font-size:12px;color:#374151;line-height:1.3;margin-bottom:4px;">' + Security.escapeHtml(entry.address) + '</div>' +
+                '<div style="font-family:monospace;font-size:12px;color:#111827;">' + entry.lat.toFixed(5) + ', ' + entry.lng.toFixed(5) + '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    function buildRoundHistoryHeaderActionsHtml() {
+        const undoEnabled = !!state.lastImportBackup;
+        const undoBg = undoEnabled ? '#fff' : '#f3f4f6';
+        const undoColor = undoEnabled ? '#111827' : '#9ca3af';
+        const undoCursor = undoEnabled ? 'pointer' : 'not-allowed';
+
+        return '<div style="display:flex;gap:6px;">' +
+            '<button data-history-action="copy-latest" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">Copy Latest</button>' +
+            '<button data-history-action="copy-all" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">Copy All</button>' +
+            '<button data-history-action="export-json" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">JSON</button>' +
+            '<button data-history-action="export-csv" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">CSV</button>' +
+            '<button data-history-action="import-json" style="padding:6px 10px;border:1px solid #d1d5db;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;">Import</button>' +
+            '<button data-history-action="undo-import" style="padding:6px 10px;border:1px solid #d1d5db;background:' + undoBg + ';color:' + undoColor + ';border-radius:8px;cursor:' + undoCursor + ';font-size:11px;">Undo</button>' +
+        '</div>';
+    }
+
+    function getHistoryRenderSignature() {
+        const top = state.roundHistory?.[0];
+        const topKey = top ? `${top.round}|${top.timestamp}|${top.lat.toFixed(5)}|${top.lng.toFixed(5)}` : 'none';
+        const undo = state.lastImportBackup ? 1 : 0;
+        return `${state.roundHistory?.length || 0}|${topKey}|${undo}`;
+    }
+
+    function buildAddressResolvedHtml(addressObj) {
+        const formatted = Security.escapeHtml(formatAddress(addressObj) || 'Unknown location');
+        const countryCodeRaw = String(addressObj?.address?.country_code || '').toLowerCase().replace(/[^a-z]/g, '');
+        const countryCode = countryCodeRaw.length === 2 ? countryCodeRaw : '';
+        const countryName = Security.escapeHtml(addressObj?.address?.country || (countryCode ? countryCode.toUpperCase() : ''));
+        const countryCodeLabel = Security.escapeHtml(countryCode.toUpperCase());
+
+        const flagRow = countryCode
+            ? '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #2a303a;">' +
+                '<img src="https://flagcdn.com/32x24/' + countryCode + '.png" style="width:32px;height:auto;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.15);" alt="' + countryCodeLabel + '"/>' +
+                '<div>' +
+                    '<div style="font-size:14px;font-weight:700;color:#f3f4f6;">' + countryName + '</div>' +
+                    '<div style="font-size:11px;color:#9ca3af;">' + countryCodeLabel + '</div>' +
+                '</div>' +
+            '</div>'
+            : '';
+
+        return '<div style="margin-bottom:12px;">' +
+            '<div style="background:#15181d;padding:14px;border-radius:14px;border:1px solid #262b34;box-shadow:none;">' +
+                flagRow +
+                '<div style="font-size:13px;color:#e5e7eb;line-height:1.5;">' + formatted + '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function buildAddressLoadingHtml() {
+        return '<div style="margin-bottom:12px;">' +
+            '<div style="background:#15181d;padding:14px;border-radius:14px;border:1px solid #262b34;box-shadow:none;">' +
+                '<div style="display:flex;align-items:center;gap:8px;">' +
+                    '<div style="width:8px;height:8px;border-radius:50%;background:#fbbf24;animation:pulse 1.5s infinite;"></div>' +
+                    '<span style="font-size:13px;color:#d1d5db;">Loading address...</span>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function buildLocationSearchingHtml() {
+        return '<div style="text-align:center;padding:30px 16px;">' +
+            '<div style="font-size:36px;margin-bottom:12px;">🛰️</div>' +
+            '<div style="color:#e5e7eb;font-size:13px;font-weight:500;">Searching for location...</div>' +
+            '<div style="color:#9ca3af;font-size:11px;margin-top:6px;">This may take a few seconds</div>' +
+        '</div>';
+    }
+
     function createInfoDisplay() {
 
         const phoneFrame = document.createElement('div');
@@ -4799,20 +5197,7 @@ AUTO PIN MODE:
             cursor: grab;
             user-select: none;
         `;
-        statusBar.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;">
-                <div id="geohelper-led-indicator" style="width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;transition:all 0.3s;"></div>
-                <span id="geohelper-clock">12:00</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:0.3px;">${CONFIG.NAME}</span>
-                <div style="display:flex;gap:6px;align-items:center;">
-                    <span>📶</span>
-                    <span>📳</span>
-                    <span>🔋</span>
-                </div>
-            </div>
-        `;
+        statusBar.innerHTML = buildPhoneStatusBarHtml();
 
         const contentArea = document.createElement('div');
         contentArea.style.cssText = `
@@ -4839,28 +5224,12 @@ AUTO PIN MODE:
         const mapSection = document.createElement('div');
         mapSection.id = 'geohelper-minimap-container';
         mapSection.style.cssText = `height: 280px; position: relative; background: #cbd5e1; flex-shrink: 0; overflow: hidden;`;
-        mapSection.innerHTML = `
-            <div id="geohelper-minimap" style="width:100%;height:100%;background:#cbd5e1;"></div>
-            <div id="geohelper-status-badge" style="position:absolute;top:12px;left:12px;background:rgba(74,222,128,0.95);padding:4px 10px;border-radius:6px;font-size:11px;color:#064e3b;font-weight:800;cursor:pointer;z-index:1000;">✓ Ready</div>
-            <div style="position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:4px;z-index:1000;">
-                <div style="display:flex;flex-direction:column;gap:1px;box-shadow:0 2px 8px rgba(0,0,0,0.15);border-radius:18px;overflow:hidden;">
-                    <button id="geohelper-zoom-in" style="width:36px;height:36px;background:#fff;border:none;color:#374151;cursor:pointer;font-size:18px;font-weight:bold;">+</button>
-                    <button id="geohelper-zoom-out" style="width:36px;height:36px;background:#fff;border:none;color:#374151;cursor:pointer;font-size:18px;font-weight:bold;">−</button>
-                </div>
-                <div id="geohelper-zoom-level" style="background:rgba(255,255,255,0.9);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;color:#1f2937;text-align:center;">x2</div>
-            </div>
-            <div id="geohelper-coords-overlay" style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,0.9);padding:4px 10px;border-radius:6px;font-family:monospace;font-size:11px;color:#1f2937;font-weight:700;z-index:1000;">--, --</div>
-        `;
+        mapSection.innerHTML = buildMiniMapSectionHtml();
 
         const locationInfo = document.createElement('div');
         locationInfo.id = 'geohelper-location-info';
         locationInfo.style.cssText = `flex: 1; background: #0f1319; padding: 12px 16px; overflow-y: auto;`;
-        locationInfo.innerHTML = `
-            <div style="text-align:center;padding:20px 10px;">
-                <div style="font-size:32px;margin-bottom:8px;">🌍</div>
-                <div style="color:#d1d5db;font-size:13px;font-weight:500;">Waiting for location...</div>
-            </div>
-        `;
+        locationInfo.innerHTML = buildLocationPlaceholderHtml();
 
         mapView.appendChild(mapSection);
         mapView.appendChild(locationInfo);
@@ -4889,12 +5258,7 @@ AUTO PIN MODE:
             appBtn.id = app.id;
             appBtn.className = 'geohelper-app-btn';
             appBtn.style.cssText = `display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; transition: transform 0.15s; user-select: none;`;
-            appBtn.innerHTML = `
-                <div class="geohelper-app-icon" data-bg="${Security.escapeAttr(app.bg)}" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:25px;background:${app.bg};">
-                    ${app.icon}
-                </div>
-                <span class="geohelper-app-label" style="font-size:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);">${app.label}</span>
-            `;
+            appBtn.innerHTML = buildAppButtonHtml(app);
             appBtn.onmouseenter = function() { this.style.transform = 'scale(1.05)'; };
             appBtn.onmouseleave = function() { this.style.transform = 'scale(1)'; };
             appBtn.addEventListener('click', (e) => e.stopPropagation());
@@ -4910,197 +5274,32 @@ AUTO PIN MODE:
         const savedHotkeys = getHotkeys();
         const savedWebhook = safeGM_getValue(CONFIG.STORAGE_KEYS.DISCORD_WEBHOOK, '');
 
-        settingsView.innerHTML = `
-            <div style="background:#fff;padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:12px;">
-                <h2 style="margin:0;font-size:18px;font-weight:700;color:#111827;">Settings</h2>
-            </div>
-            <div style="flex:1;overflow-y:auto;padding:16px;">
-                <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">
-                    <div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:14px;">🔴 SETTING MARKER</div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <div><div style="font-weight:600;font-size:14px;">Auto Marker</div><div style="font-size:11px;color:#6b7280;">Auto Marker per round</div></div>
-                        <label style="position:relative;display:inline-block;width:22px;height:22px;">
-                            <input type="checkbox" id="geohelper-auto-marker" ${state.features?.autoMarker ? 'checked' : ''} style="opacity:0;width:0;height:0;">
-                            <span id="geohelper-auto-marker-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>
-                            <span id="geohelper-auto-marker-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>
-                        </label>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <div><div style="font-weight:600;font-size:14px;">Auto Pin</div><div style="font-size:11px;color:#6b7280;">pin guess on game map</div></div>
-                        <label style="position:relative;display:inline-block;width:22px;height:22px;">
-                            <input type="checkbox" id="geohelper-auto-pin" ${state.features?.autoPin ? 'checked' : ''} style="opacity:0;width:0;height:0;">
-                            <span id="geohelper-auto-pin-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>
-                            <span id="geohelper-auto-pin-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>
-                        </label>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <div><div style="font-weight:600;font-size:14px;">Safe Mode</div><div style="font-size:11px;color:#6b7280;">Random offset (4.5k+ pts)</div></div>
-                        <label style="position:relative;display:inline-block;width:22px;height:22px;">
-                            <input type="checkbox" id="geohelper-safe-mode" ${state.features?.safeMode ? 'checked' : ''} style="opacity:0;width:0;height:0;">
-                            <span id="geohelper-safe-mode-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>
-                            <span id="geohelper-safe-mode-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>
-                        </label>
-                    </div>
-                </div>
-                <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                        <div style="font-size:12px;color:#6b7280;font-weight:700;">⚡ Preset Mode</div>
-                        <div id="geohelper-preset-status" style="font-size:10px;color:#4ade80;font-weight:800;">MODE: ${state.currentPreset.toUpperCase()}</div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                        <button data-preset="exact" style="padding:10px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:700;">Exact</button>
-                        <button data-preset="safe" style="padding:10px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:700;">Safe</button>
-                        <button data-preset="stealth" style="padding:10px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:700;">Stealth</button>
-                    </div>
-                </div>
-                <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                        <div style="font-size:12px;color:#6b7280;font-weight:700;">📐 UI Scale</div>
-                        <div id="geohelper-scale-status" style="font-size:10px;color:#4ade80;font-weight:800;">SCALE: ${(state.uiScale || CONFIG.DEFAULTS.UI_SCALE).toUpperCase()}</div>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <div><div style="font-weight:600;font-size:14px;">Mode Compact</div><div style="font-size:11px;color:#6b7280;">Off: Normal, On: Compact</div></div>
-                        <label style="position:relative;display:inline-block;width:22px;height:22px;">
-                            <input type="checkbox" id="geohelper-ui-scale" ${state.uiScale === 'compact' ? 'checked' : ''} style="opacity:0;width:0;height:0;">
-                            <span id="geohelper-ui-scale-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>
-                            <span id="geohelper-ui-scale-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>
-                        </label>
-                    </div>
-                </div>
-                <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">
-                    <div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:12px;">🧰 Session Backup</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                        <button id="geohelper-export-session" style="padding:12px;background:#fff;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;">📤 Backup</button>
-                        <button id="geohelper-import-session" style="padding:12px;background:#fff;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;">📥 Restore</button>
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:40px;">
-                    <button id="geohelper-save" style="padding:14px;background:#1a73e8;color:#fff;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:14px;">💾 Save</button>
-                    <button id="geohelper-reset" style="padding:14px;background:#fff;color:#ef4444;border:2px solid #ef4444;border-radius:14px;cursor:pointer;font-weight:700;font-size:14px;">🔄 Reset</button>
-                </div>
-            </div>
-        `;
+        settingsView.innerHTML = buildSettingsViewHtml();
 
         const hotkeysView = document.createElement('div');
         hotkeysView.id = 'geohelper-hotkeys-view';
         hotkeysView.style.cssText = `min-width: 100%; display: flex; flex-direction: column; background: #f3f4f6; height: 100%;`;
-        hotkeysView.innerHTML = `
-            <div style="background:linear-gradient(135deg, #ec4899 0%, #be185d 100%);padding:16px 20px;display:flex;align-items:center;gap:12px;">
-                <h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">⌨️ Hotkeys</h2>
-            </div>
-            <div style="flex:1;overflow-y:auto;padding:16px;">
-                <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">
-                    <div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:14px;">🎮 Key Bindings</div>
-                    ${Object.entries(CONFIG.DEFAULT_HOTKEYS).map(([hk, val]) => `
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;">
-                            <div><label style="font-size:13px;font-weight:600;text-transform:capitalize;">${hk.replace(/([A-Z])/g, ' $1')}</label><div style="font-size:10px;color:#9ca3af;">${getHotkeyDescription(hk)}</div></div>
-                            <input type="text" maxlength="10" data-hotkey="${hk}" value="${Security.escapeAttr(savedHotkeys[hk] || val)}" style="width:80px;text-align:center;padding:8px;border:2px solid #e5e7eb;border-radius:10px;font-size:12px;font-weight:700;color:#ec4899;">
-                        </div>
-                    `).join('')}
-                </div>
-                <button id="geohelper-hotkeys-save" style="width:100%;padding:14px;background:linear-gradient(135deg, #ec4899 0%, #be185d 100%);color:#fff;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:14px;">💾 Save Hotkeys</button>
-            </div>
-        `;
+        hotkeysView.innerHTML = buildHotkeysViewHtml(savedHotkeys);
 
         const discordView = document.createElement('div');
         discordView.id = 'geohelper-discord-view';
         discordView.style.cssText = `min-width: 100%; display: flex; flex-direction: column; background: #f3f4f6; height: 100%;`;
-        discordView.innerHTML = `
-            <div style="background:linear-gradient(135deg, #5865F2 0%, #4752c4 100%);padding:16px 20px;display:flex;align-items:center;gap:12px;">
-                <h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">💬 Discord</h2>
-            </div>
-            <div style="flex:1;overflow-y:auto;padding:16px;">
-                <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">
-                    <div style="font-size:12px;color:#6b7280;font-weight:700;margin-bottom:12px;">🔗 Webhook URL</div>
-                    <input type="text" id="geohelper-discord-webhook" value="${Security.escapeAttr(savedWebhook)}" placeholder="https://discord.com/api/webhooks/..." style="width:100%;padding:14px;border:2px solid #e5e7eb;border-radius:12px;font-size:13px;">
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <button id="geohelper-discord-save" style="padding:14px;background:linear-gradient(135deg, #5865F2 0%, #4752c4 100%);color:#fff;border:none;border-radius:14px;cursor:pointer;font-weight:700;">💾 Save</button>
-                    <button id="geohelper-discord-test" style="padding:14px;background:#fff;color:#5865F2;border:2px solid #5865F2;border-radius:14px;cursor:pointer;font-weight:700;">🧪 Test</button>
-                </div>
-            </div>
-        `;
+        discordView.innerHTML = buildDiscordViewHtml(savedWebhook);
 
         const copyView = document.createElement('div');
         copyView.id = 'geohelper-copy-view';
         copyView.style.cssText = `min-width: 100%; display: flex; flex-direction: column; background: #f3f4f6; height: 100%;`;
-        copyView.innerHTML = `
-            <div style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);padding:16px 20px;display:flex;align-items:center;gap:12px;">
-                <h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">📋 Copy</h2>
-            </div>
-            <div style="flex:1;overflow-y:auto;padding:16px;">
-                <div style="background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;">
-                    <div id="geohelper-copy-coords" style="font-family:monospace;font-size:16px;font-weight:600;text-align:center;padding:16px;background:#f9fafb;border-radius:12px;">Waiting for location...</div>
-                </div>
-                <button id="geohelper-copy-main" style="width:100%;padding:16px;background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);color:#fff;border:none;border-radius:16px;cursor:pointer;font-size:15px;font-weight:600;">📋 Copy Coordinates</button>
-            </div>
-        `;
+        copyView.innerHTML = buildCopyViewHtml();
 
         const mapsView = document.createElement('div');
         mapsView.id = 'geohelper-maps-view';
         mapsView.style.cssText = `min-width: 100%; display: flex; flex-direction: column; background: #f3f4f6; height: 100%;`;
-        mapsView.innerHTML = `
-            <div style="background:linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);padding:16px 20px;display:flex;align-items:center;gap:12px;">
-                <h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">🗺️ Maps</h2>
-            </div>
-            <div style="flex:1;overflow-y:auto;padding:16px;">
-                <div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:16px;">
-                    <div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;font-size:13px;font-weight:600;">🎨 Map Layer Style</div>
-                    <button data-map-layer="default" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
-                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-default" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">OpenStreetMap</span>
-                    </button>
-                    <button data-map-layer="dark" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
-                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-dark" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">Carto Dark</span>
-                    </button>
-                    <button data-map-layer="light" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
-                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-light" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">Carto Light</span>
-                    </button>
-                    <button data-map-layer="terrain" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
-                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-terrain" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">OpenTopoMap</span>
-                    </button>
-                    <button data-map-layer="voyager" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
-                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-voyager" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">Voyager</span>
-                    </button>
-                    <button data-map-layer="positron" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
-                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-positron" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">Positron</span>
-                    </button>
-                    <button data-map-layer="satellite" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;">
-                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-satellite" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">ESRI Satellite</span>
-                    </button>
-                    <button data-map-layer="hybrid" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:none;cursor:pointer;text-align:left;">
-                        <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;"><div class="layer-indicator-hybrid" style="width:10px;height:10px;border-radius:50%;"></div></div>
-                        <span style="font-size:15px;">Satellite Hybrid</span>
-                    </button>
-                </div>
-                <div id="geohelper-open-gmaps" style="background:#fff;border-radius:16px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px;">
-                    <div style="width:44px;height:44px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">🌐</div>
-                    <div style="flex:1;"><div style="font-size:15px;font-weight:500;">Open in Google Maps</div><div style="font-size:13px;color:#6b7280;">View current location</div></div>
-                    <span style="font-size:20px;color:#9ca3af;">›</span>
-                </div>
-            </div>
-        `;
+        mapsView.innerHTML = buildMapsViewHtml();
 
         const historyView = document.createElement('div');
         historyView.id = 'geohelper-history-view';
         historyView.style.cssText = `min-width: 100%; display: flex; flex-direction: column; background: #f3f4f6; height: 100%;`;
-        historyView.innerHTML = `
-            <div style="background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <h2 style="margin:0;font-size:18px;font-weight:700;color:#fff;">📜 History</h2>
-                </div>
-                <div id="geohelper-history-count" style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:12px;font-size:11px;color:#fff;font-weight:600;">0 rounds</div>
-            </div>
-            <div id="geohelper-history-content" style="flex:1;overflow-y:auto;padding:16px;">
-                <div id="geohelper-history-list"></div>
-            </div>
-        `;
+        historyView.innerHTML = buildHistoryViewHtml();
 
         viewsContainer.appendChild(mapView);
         viewsContainer.appendChild(menuView);
@@ -5279,47 +5478,25 @@ AUTO PIN MODE:
                             if (state.runtime?.flags?.USE_REQUEST_TOKENING) {
                                 const stillCurrent = RequestTokens.isCurrent('address_panel', panelAddressToken);
                                 if (state._pendingAddressCoords === lookupKey && stillCurrent) {
-                                    state.address = addr;
-                                    telemetryInc('async.addressApplied');
-                                    updateInfoDisplay();
+                                    if (applyAddressIfCurrent(coords, addr)) {
+                                        telemetryInc('async.addressApplied');
+                                        syncLatestHistoryAddress(coords, addr);
+                                        updateInfoDisplay();
+                                    }
                                 } else {
                                     telemetryInc('async.addressDiscardedStale');
                                 }
                             } else if (state._pendingAddressCoords === lookupKey) {
-                                state.address = addr;
-                                updateInfoDisplay();
+                                if (applyAddressIfCurrent(coords, addr)) {
+                                    syncLatestHistoryAddress(coords, addr);
+                                    updateInfoDisplay();
+                                }
                             }
                         }).catch(() => Logger.debug('Address lookup pending...'));
                     }
                 }
 
-                html += `<div style="margin-bottom:12px;">`;
-
-                if (state.address) {
-                    const formatted = formatAddress(state.address);
-                    const countryCode = state.address.address?.country_code;
-                    const country = state.address.address?.country;
-
-                    html += `<div style="background:#15181d;padding:14px;border-radius:14px;border:1px solid #262b34;box-shadow:none;">
-                        ${countryCode ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #2a303a;">
-                            <img src="https://flagcdn.com/32x24/${countryCode.toLowerCase()}.png" style="width:32px;height:auto;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.15);" alt="${Security.escapeHtml(countryCode)}"/>
-                            <div>
-                                <div style="font-size:14px;font-weight:700;color:#f3f4f6;">${Security.escapeHtml(country || countryCode.toUpperCase())}</div>
-                                <div style="font-size:11px;color:#9ca3af;">${Security.escapeHtml(countryCode.toUpperCase())}</div>
-                            </div>
-                        </div>` : ''}
-                        <div style="font-size:13px;color:#e5e7eb;line-height:1.5;">${Security.escapeHtml(formatted)}</div>
-                    </div>`;
-                } else {
-                    html += `<div style="background:#15181d;padding:14px;border-radius:14px;border:1px solid #262b34;box-shadow:none;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24;animation:pulse 1.5s infinite;"></div>
-                            <span style="font-size:13px;color:#d1d5db;">Loading address...</span>
-                        </div>
-                    </div>`;
-                }
-
-                html += `</div>`;
+                html = state.address ? buildAddressResolvedHtml(state.address) : buildAddressLoadingHtml();
             } else {
                 if (statusBadge) {
                     statusBadge.style.background = 'rgba(251,191,36,0.95)';
@@ -5329,14 +5506,13 @@ AUTO PIN MODE:
 
                 updateLedIndicator('waiting');
 
-                html += `<div style="text-align:center;padding:30px 16px;">
-                    <div style="font-size:36px;margin-bottom:12px;">🛰️</div>
-                    <div style="color:#e5e7eb;font-size:13px;font-weight:500;">Searching for location...</div>
-                    <div style="color:#9ca3af;font-size:11px;margin-top:6px;">This may take a few seconds</div>
-                </div>`;
+                html = buildLocationSearchingHtml();
             }
 
-            locationInfo.innerHTML = html;
+            if (uiRenderCache.locationHtml !== html) {
+                locationInfo.innerHTML = html;
+                uiRenderCache.locationHtml = html;
+            }
 
             display.style.display = 'block';
             state.miniMapVisible = true;
@@ -5356,6 +5532,7 @@ AUTO PIN MODE:
         } else {
             display.style.display = 'none';
             state.miniMapVisible = false;
+            uiRenderCache.locationHtml = '';
         }
     }
 
@@ -5390,8 +5567,34 @@ AUTO PIN MODE:
             const pw = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
             delete pw.__btpDebug;
         } catch (e) {
-
+            Logger.debug('uninstallDebugBridge warning:', e?.message || 'unknown');
         }
+    }
+
+    function collectPerformanceSnapshot() {
+        return {
+            monitoring: {
+                intervalActive: !!monitoringInterval,
+                busy: !!monitoringBusy,
+                failCount: Number(monitoringFailCount || 0),
+                errorStreak: Number(monitoringConsecutiveErrors || 0),
+                tickCounter: Number(monitoringTickCounter || 0)
+            },
+            address: {
+                queueLength: Array.isArray(addressQueue) ? addressQueue.length : 0,
+                processing: !!addressProcessing,
+                backoffMs: Number(addressBackoffMs || 0),
+                consecutiveErrors: Number(addressConsecutiveErrors || 0)
+            },
+            renderCache: {
+                hasLocationHtml: !!uiRenderCache.locationHtml,
+                historySignature: uiRenderCache.historySignature || '',
+                statusText: uiRenderCache.statusText || '',
+                ledStatus: uiRenderCache.ledStatus || ''
+            },
+            extractionCache: extractionCache.getStats(),
+            timestamp: Date.now()
+        };
     }
 
     // ========================================================================
@@ -5411,7 +5614,15 @@ AUTO PIN MODE:
         oneUiViewsStyled = false;
         panelUiBootstrapped = false;
         monitoringBusySince = 0;
+        monitoringTickCounter = 0;
         state._uiRefs = null;
+        uiRenderCache.locationHtml = '';
+        uiRenderCache.historySignature = '';
+        uiRenderCache.statusText = '';
+        uiRenderCache.statusColor = '';
+        uiRenderCache.badgeText = '';
+        uiRenderCache.badgeBg = '';
+        uiRenderCache.ledStatus = '';
 
         Logger.initDebugFlag();
 
@@ -5534,7 +5745,7 @@ AUTO PIN MODE:
                     state.gameMap.removeLayer(state.marker);
                 }
             } catch (e) {
-
+                Logger.debug('Cleanup marker removal warning:', e?.message || 'unknown');
             }
             state.marker = null;
         }
@@ -5543,7 +5754,7 @@ AUTO PIN MODE:
             try {
                 state.miniMap.removeLayer(state.miniMapMarker);
             } catch (e) {
-
+                Logger.debug('Cleanup minimap marker removal warning:', e?.message || 'unknown');
             }
             state.miniMapMarker = null;
         }
@@ -5553,7 +5764,7 @@ AUTO PIN MODE:
                 state.miniMap.off();
                 state.miniMap.remove();
             } catch (e) {
-
+                Logger.debug('Cleanup minimap destroy warning:', e?.message || 'unknown');
             }
             state.miniMap = null;
             state.miniMapTileLayer = null;
@@ -5574,6 +5785,7 @@ AUTO PIN MODE:
         discordInFlight = false;
         monitoringBusy = false;
         monitoringBusySince = 0;
+        monitoringTickCounter = 0;
         oneUiViewsStyled = false;
         panelUiBootstrapped = false;
         refreshRequestId++;
@@ -5582,6 +5794,13 @@ AUTO PIN MODE:
         state.swapPhoneView = null;
         state.phoneView = 'map';
         state._uiRefs = null;
+        uiRenderCache.locationHtml = '';
+        uiRenderCache.historySignature = '';
+        uiRenderCache.statusText = '';
+        uiRenderCache.statusColor = '';
+        uiRenderCache.badgeText = '';
+        uiRenderCache.badgeBg = '';
+        uiRenderCache.ledStatus = '';
 
         isInitialized = false;
         isCleaningUp = false;
@@ -5605,6 +5824,7 @@ AUTO PIN MODE:
             getExtractorHealth() { return typeof ExtractorRegistry?.getHealthSnapshot === 'function' ? ExtractorRegistry.getHealthSnapshot() : {}; },
             getPatchStatus() { return typeof PatchManager?.status === 'function' ? PatchManager.status() : {}; },
             getProtectionState() { return { ...(state.runtime?.protection || {}) }; },
+            getPerformanceSnapshot() { return collectPerformanceSnapshot(); },
             runIntegrityCheck(r) { IntegrityManager.runCheck(r || 'manual_debug', true); return true; },
             getIntegrityDiagnostics() {
                 return {
