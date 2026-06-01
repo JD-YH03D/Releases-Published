@@ -22,8 +22,6 @@
 // @connect      npoint.io
 // @run-at       document-idle
 // @icon         https://raw.githubusercontent.com/JD-YH03D/BintangToba/main/icon.svg
-// @downloadURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js
-// @updateURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.meta.js
 // ==/UserScript==
 
 /* global google, L */
