@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         GeoGuessr - Let's explore the world!
+// @name         🏆[#1 GeoGuessr] A.M.A.S (Advanced Mapping Analysis System)
 // @namespace    https://github.com/JD-YH03D/release
 // @version      2.1.1
-// @description  Universal geography game assistant with Mini Map - GeoGuessr, WorldGuessr, OpenGuessr, FreeGuessr
+// @description  Professional GeoGuessr enhancement suite featuring real-time map analysis, coordinate intelligence, metadata extraction, and advanced exploration utilities.
 // @author       Bintang Toba Pro
 // @license      MIT
 // @match        *://*.geoguessr.com/*
@@ -22,6 +22,8 @@
 // @connect      npoint.io
 // @run-at       document-idle
 // @icon         https://raw.githubusercontent.com/JD-YH03D/BintangToba/main/icon.svg
+// @downloadURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js
+// @updateURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.meta.js
 // ==/UserScript==
 
 /* global google, L */
@@ -3097,8 +3099,6 @@ AUTO PIN MODE:
 
     // ========================================================================
     // [SECTION 18-B] GAME MAP PIN ENGINE
-    // ========================================================================
-
     // ========================================================================
 
     function resolveGoogleMapFromFiber(domNode, maxDepth = 8) {
