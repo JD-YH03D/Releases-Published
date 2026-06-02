@@ -1,12 +1,11 @@
 // ==UserScript==
-// @name         Bintang Toba Pro
+// @name         Chess.com - Play Chess Online - Free Games
 // @namespace    Bintang-Toba-Pro
-// @version      1.0.0
-// @description  sistem string concatenation style - type scrip ES6
-// @author       Delta-Polder-Indonesia
+// @version      1.2.0
+// @description  Play chess online for free on Chess.com with over 250 million members from around the world. Have fun playing with friends or challenging the computer!
+// @author       JD-YH03D
 // @license      GPL-3.0-only
 // @match        https://www.chess.com/*
-// @icon         https://cdn.corenexis.com/files/c/3853186720.png
 // @run-at       document-idle
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -15,8 +14,6 @@
 // @grant        GM_info
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
-// @resource     stockfishjs  https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js
-// @resource     openingbook  https://raw.githubusercontent.com/JD-YH03D/release/refs/heads/main/Chess.com%20-%20Play%20Chess%20Online%20-%20Free%20Games/OpeningBook.json
 // @connect      localhost
 // @connect      cdnjs.cloudflare.com
 // @connect      unpkg.com
@@ -24,6 +21,11 @@
 // @connect      raw.githubusercontent.com
 // @connect      drive.google.com
 // @antifeature  none
+// @resource     stockfishjs  https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js
+// @resource     openingbook  https://api.npoint.io/61fba6a4c1683967c77f
+// @icon         https://raw.githubusercontent.com/JD-YH03D/BintangToba/main/icon.svg
+// @downloadURL https://update.greasyfork.org/scripts/579299/Chesscom%20-%20Play%20Chess%20Online%20-%20Free%20Games.user.js
+// @updateURL https://update.greasyfork.org/scripts/579299/Chesscom%20-%20Play%20Chess%20Online%20-%20Free%20Games.meta.js
 // ==/UserScript==
 
 (function () {
@@ -70,7 +72,7 @@
         window.GM_info = {
             script: {
                 name: "Bintang Toba Pro",
-                version: "1.0.0",
+                version: "1.2.0",
                 namespace: "Bintang-Toba-Pro"
             }
         };
@@ -523,7 +525,7 @@
         try {
             GM_xmlhttpRequest({
                 method: "GET",
-                url: "https://raw.githubusercontent.com/JD-YH03D/release/refs/heads/main/Chess.com%20-%20Play%20Chess%20Online%20-%20Free%20Games/OpeningBook.json",
+                url: "https://api.npoint.io/61fba6a4c1683967c77f",
                 timeout: 8000,
                 onload: function (r) {
                     _openingBookLoadState.inFlight = false;
