@@ -1,0 +1,526 @@
+[
+  {
+    "Country": "Afganistan",
+    "Currency": "Afghani"
+  },
+  {
+    "Country": "Albania",
+    "Currency": "Lek"
+  },
+  {
+    "Country": "Aljazair",
+    "Currency": "Dinar"
+  },
+  {
+    "Country": "Amerika",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Angola",
+    "Currency": "Kwanza"
+  },
+  {
+    "Country": "Armenia",
+    "Currency": "Dram"
+  },
+  {
+    "Country": "Australia",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Austria",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Azerbaijan",
+    "Currency": "Manat"
+  },
+  {
+    "Country": "Bahama",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Bahrain",
+    "Currency": "Dinar"
+  },
+  {
+    "Country": "Bangladesh",
+    "Currency": "Taka"
+  },
+  {
+    "Country": "Barbados",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Belanda",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Belarus/Belarusia",
+    "Currency": "Rubel"
+  },
+  {
+    "Country": "Belgia",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Belize",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Bhutan",
+    "Currency": "Ngultrum"
+  },
+  {
+    "Country": "Botswana",
+    "Currency": "Pula"
+  },
+  {
+    "Country": "Brasil",
+    "Currency": "Real"
+  },
+  {
+    "Country": "Bulgaria",
+    "Currency": "Lev"
+  },
+  {
+    "Country": "Burundi",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Ceko",
+    "Currency": "Koruna"
+  },
+  {
+    "Country": "Chile/Chili",
+    "Currency": "Peso"
+  },
+  {
+    "Country": "Cina",
+    "Currency": "Yuan"
+  },
+  {
+    "Country": "Denmark",
+    "Currency": "Krona"
+  },
+  {
+    "Country": "Dominika",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Ekuador",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Eritrea",
+    "Currency": "Nakfa"
+  },
+  {
+    "Country": "Estonia",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Fiji",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Filipina",
+    "Currency": "Peso"
+  },
+  {
+    "Country": "Finlandia",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Gabon",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Gambia",
+    "Currency": "Dalasi"
+  },
+  {
+    "Country": "Georgia",
+    "Currency": "Lari"
+  },
+  {
+    "Country": "Ghana",
+    "Currency": "Cedi"
+  },
+  {
+    "Country": "Guinea",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Guyana",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Honduras",
+    "Currency": "Lempira"
+  },
+  {
+    "Country": "Hongaria/Hungaria",
+    "Currency": "Forint"
+  },
+  {
+    "Country": "Indonesia",
+    "Currency": "Rupiah"
+  },
+  {
+    "Country": "Inggris",
+    "Currency": "Pound"
+  },
+  {
+    "Country": "Irak",
+    "Currency": "Dinar"
+  },
+  {
+    "Country": "Iran",
+    "Currency": "Rial"
+  },
+  {
+    "Country": "Irlandia",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Islandia",
+    "Currency": "Krona"
+  },
+  {
+    "Country": "Italia",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Jamaika",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Jepang",
+    "Currency": "Yen"
+  },
+  {
+    "Country": "Jerman",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Kanada",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Kazakhstan",
+    "Currency": "Tenge"
+  },
+  {
+    "Country": "Kenya",
+    "Currency": "Shilling"
+  },
+  {
+    "Country": "Kirgizstan",
+    "Currency": "Som"
+  },
+  {
+    "Country": "Kolombia",
+    "Currency": "Peso"
+  },
+  {
+    "Country": "Korsel",
+    "Currency": "Won"
+  },
+  {
+    "Country": "Korut",
+    "Currency": "Won"
+  },
+  {
+    "Country": "Kroasia",
+    "Currency": "Kuna"
+  },
+  {
+    "Country": "Kuba",
+    "Currency": "Peso"
+  },
+  {
+    "Country": "Laos",
+    "Currency": "Kip"
+  },
+  {
+    "Country": "Latvia",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Lebanon",
+    "Currency": "Pound"
+  },
+  {
+    "Country": "Liberia",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Libya",
+    "Currency": "Dinar"
+  },
+  {
+    "Country": "Liechtenstein",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Lituania",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Madagaskar",
+    "Currency": "Ariary"
+  },
+  {
+    "Country": "Makedonia",
+    "Currency": "Denar"
+  },
+  {
+    "Country": "Maladewa",
+    "Currency": "Rufiyaa"
+  },
+  {
+    "Country": "Malawi",
+    "Currency": "Kwacha"
+  },
+  {
+    "Country": "Mali",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Malta",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Maroko",
+    "Currency": "Dirham"
+  },
+  {
+    "Country": "Mauritania",
+    "Currency": "Ouguiya"
+  },
+  {
+    "Country": "Mesir",
+    "Currency": "Pound"
+  },
+  {
+    "Country": "Moldova",
+    "Currency": "Leu"
+  },
+  {
+    "Country": "Montenegro",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Mozambik",
+    "Currency": "Metical"
+  },
+  {
+    "Country": "Myanmar",
+    "Currency": "Kyat"
+  },
+  {
+    "Country": "Namibia",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Nauru",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Nepal",
+    "Currency": "Rupee"
+  },
+  {
+    "Country": "Niger",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Nigeria",
+    "Currency": "Naira"
+  },
+  {
+    "Country": "Nikaragua",
+    "Currency": "Cordoba"
+  },
+  {
+    "Country": "Norwegia",
+    "Currency": "Krona"
+  },
+  {
+    "Country": "Oman",
+    "Currency": "Rial"
+  },
+  {
+    "Country": "Pakistan",
+    "Currency": "Rupee"
+  },
+  {
+    "Country": "Paraguay",
+    "Currency": "Guarani"
+  },
+  {
+    "Country": "Perancis",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Peru",
+    "Currency": "Sol"
+  },
+  {
+    "Country": "Polandia",
+    "Currency": "Zloty"
+  },
+  {
+    "Country": "Portugal",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Qatar",
+    "Currency": "Riyal"
+  },
+  {
+    "Country": "Romania/Rumania",
+    "Currency": "Leu"
+  },
+  {
+    "Country": "Rusia",
+    "Currency": "Rubel"
+  },
+  {
+    "Country": "Rwanda",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Samoa",
+    "Currency": "Tala"
+  },
+  {
+    "Country": "Senegal",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Serbia",
+    "Currency": "Dinar"
+  },
+  {
+    "Country": "Singapura",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Siprus",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Slovenia",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Slowakia",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Somalia",
+    "Currency": "Shilling"
+  },
+  {
+    "Country": "Spanyol",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Sudan",
+    "Currency": "Pound"
+  },
+  {
+    "Country": "Suriah",
+    "Currency": "Pound"
+  },
+  {
+    "Country": "Suriname",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Swedia",
+    "Currency": "Krona"
+  },
+  {
+    "Country": "Swiss",
+    "Currency": "Franc"
+  },
+  {
+    "Country": "Taiwan",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Tajikistan",
+    "Currency": "Somoni"
+  },
+  {
+    "Country": "Thailand",
+    "Currency": "Baht"
+  },
+  {
+    "Country": "Tiongkok",
+    "Currency": "Yuan"
+  },
+  {
+    "Country": "Tunisia",
+    "Currency": "Dinar"
+  },
+  {
+    "Country": "Turki",
+    "Currency": "Lira"
+  },
+  {
+    "Country": "Turkmenistan",
+    "Currency": "Manat"
+  },
+  {
+    "Country": "Tuvalu",
+    "Currency": "Dolar"
+  },
+  {
+    "Country": "Uganda",
+    "Currency": "Shilling"
+  },
+  {
+    "Country": "Ukraina",
+    "Currency": "Hryvnia"
+  },
+  {
+    "Country": "Uruguay",
+    "Currency": "Peso"
+  },
+  {
+    "Country": "Uzbekistan",
+    "Currency": "Som"
+  },
+  {
+    "Country": "Venezuela",
+    "Currency": "Bolivar"
+  },
+  {
+    "Country": "Vietnam",
+    "Currency": "Dong"
+  },
+  {
+    "Country": "Yaman",
+    "Currency": "Rial"
+  },
+  {
+    "Country": "Yordania",
+    "Currency": "Dinar"
+  },
+  {
+    "Country": "Yunani",
+    "Currency": "Euro"
+  },
+  {
+    "Country": "Zambia",
+    "Currency": "Kwacha"
+  },
+  {
+    "Country": "Zimbabwe",
+    "Currency": "Euro"
+  }
+]

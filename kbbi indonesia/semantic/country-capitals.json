@@ -1,0 +1,522 @@
+[
+  {
+    "Country": "Afganistan",
+    "Capital": "Kabul"
+  },
+  {
+    "Country": "Albania",
+    "Capital": "Tirana"
+  },
+  {
+    "Country": "Aljazair",
+    "Capital": "Aljir"
+  },
+  {
+    "Country": "Amerika",
+    "Capital": "Washington"
+  },
+  {
+    "Country": "Angola",
+    "Capital": "Luanda"
+  },
+  {
+    "Country": "Armenia",
+    "Capital": "Yerevan"
+  },
+  {
+    "Country": "Australia",
+    "Capital": "Canberra"
+  },
+  {
+    "Country": "Austria",
+    "Capital": "Wina"
+  },
+  {
+    "Country": "Azerbaijan",
+    "Capital": "Baku"
+  },
+  {
+    "Country": "Bahama",
+    "Capital": "Nassau"
+  },
+  {
+    "Country": "Bahrain",
+    "Capital": "Manama"
+  },
+  {
+    "Country": "Bangladesh",
+    "Capital": "Dhaka"
+  },
+  {
+    "Country": "Barbados",
+    "Capital": "Bridgetown"
+  },
+  {
+    "Country": "Belanda",
+    "Capital": "Amsterdam"
+  },
+  {
+    "Country": "Belarus/Belarusia",
+    "Capital": "Minsk"
+  },
+  {
+    "Country": "Belgia",
+    "Capital": "Brussel"
+  },
+  {
+    "Country": "Belize",
+    "Capital": "Belmopan"
+  },
+  {
+    "Country": "Bhutan",
+    "Capital": "Thimphu"
+  },
+  {
+    "Country": "Botswana",
+    "Capital": "Gaborone"
+  },
+  {
+    "Country": "Brasil",
+    "Capital": "Brasilia"
+  },
+  {
+    "Country": "Bulgaria",
+    "Capital": "Sofia"
+  },
+  {
+    "Country": "Burundi",
+    "Capital": "Bujumbura"
+  },
+  {
+    "Country": "Ceko",
+    "Capital": "Praha"
+  },
+  {
+    "Country": "Chile/Chili",
+    "Capital": "Santiago"
+  },
+  {
+    "Country": "Cina",
+    "Capital": "Beijing"
+  },
+  {
+    "Country": "Denmark",
+    "Capital": "Kopenhagen"
+  },
+  {
+    "Country": "Dominika",
+    "Capital": "Roseau"
+  },
+  {
+    "Country": "Ekuador",
+    "Capital": "Quito"
+  },
+  {
+    "Country": "Eritrea",
+    "Capital": "Asmara"
+  },
+  {
+    "Country": "Estonia",
+    "Capital": "Tallinn"
+  },
+  {
+    "Country": "Fiji",
+    "Capital": "Suva"
+  },
+  {
+    "Country": "Filipina",
+    "Capital": "Manila"
+  },
+  {
+    "Country": "Finlandia",
+    "Capital": "Helsinki"
+  },
+  {
+    "Country": "Gabon",
+    "Capital": "Libreville"
+  },
+  {
+    "Country": "Gambia",
+    "Capital": "Banjul"
+  },
+  {
+    "Country": "Georgia",
+    "Capital": "Tbilisi"
+  },
+  {
+    "Country": "Ghana",
+    "Capital": "Accra"
+  },
+  {
+    "Country": "Guinea",
+    "Capital": "Conakry"
+  },
+  {
+    "Country": "Guyana",
+    "Capital": "Georgetown"
+  },
+  {
+    "Country": "Honduras",
+    "Capital": "Tegucigalpa"
+  },
+  {
+    "Country": "Hongaria/Hungaria",
+    "Capital": "Budapest"
+  },
+  {
+    "Country": "Indonesia",
+    "Capital": "Jakarta"
+  },
+  {
+    "Country": "Inggris",
+    "Capital": "London"
+  },
+  {
+    "Country": "Irak",
+    "Capital": "Bagdad"
+  },
+  {
+    "Country": "Iran",
+    "Capital": "Teheran"
+  },
+  {
+    "Country": "Irlandia",
+    "Capital": "Dublin"
+  },
+  {
+    "Country": "Islandia",
+    "Capital": "Reykjavik"
+  },
+  {
+    "Country": "Italia",
+    "Capital": "Roma"
+  },
+  {
+    "Country": "Jamaika",
+    "Capital": "Kingston"
+  },
+  {
+    "Country": "Jepang",
+    "Capital": "Tokyo"
+  },
+  {
+    "Country": "Jerman",
+    "Capital": "Berlin"
+  },
+  {
+    "Country": "Kanada",
+    "Capital": "Ottawa"
+  },
+  {
+    "Country": "Kazakhstan",
+    "Capital": "Astana"
+  },
+  {
+    "Country": "Kenya",
+    "Capital": "Nairobi"
+  },
+  {
+    "Country": "Kirgizstan",
+    "Capital": "Bishkek"
+  },
+  {
+    "Country": "Kolombia",
+    "Capital": "Bogota"
+  },
+  {
+    "Country": "Korsel",
+    "Capital": "Seoul"
+  },
+  {
+    "Country": "Korut",
+    "Capital": "Pyongyang"
+  },
+  {
+    "Country": "Kroasia",
+    "Capital": "Zagreb"
+  },
+  {
+    "Country": "Kuba",
+    "Capital": "Havana"
+  },
+  {
+    "Country": "Laos",
+    "Capital": "Vientiane"
+  },
+  {
+    "Country": "Lebanon",
+    "Capital": "Beirut"
+  },
+  {
+    "Country": "Liberia",
+    "Capital": "Monrovia"
+  },
+  {
+    "Country": "Libya",
+    "Capital": "Tripoli"
+  },
+  {
+    "Country": "Liechtenstein",
+    "Capital": "Vaduz"
+  },
+  {
+    "Country": "Lituania",
+    "Capital": "Vilnius"
+  },
+  {
+    "Country": "Madagaskar",
+    "Capital": "Antananarivo"
+  },
+  {
+    "Country": "Makedonia",
+    "Capital": "Skopye"
+  },
+  {
+    "Country": "Maladewa",
+    "Capital": "Male"
+  },
+  {
+    "Country": "Malawi",
+    "Capital": "Lilongwe"
+  },
+  {
+    "Country": "Mali",
+    "Capital": "Bamako"
+  },
+  {
+    "Country": "Malta",
+    "Capital": "Valletta"
+  },
+  {
+    "Country": "Maroko",
+    "Capital": "Rabat"
+  },
+  {
+    "Country": "Mauritania",
+    "Capital": "Nouakchott"
+  },
+  {
+    "Country": "Mesir",
+    "Capital": "Kairo"
+  },
+  {
+    "Country": "Moldova",
+    "Capital": "Chisinau"
+  },
+  {
+    "Country": "Montenegro",
+    "Capital": "Podgorica"
+  },
+  {
+    "Country": "Mozambik",
+    "Capital": "Maputo"
+  },
+  {
+    "Country": "Myanmar",
+    "Capital": "Naypyidaw"
+  },
+  {
+    "Country": "Namibia",
+    "Capital": "Windhoek"
+  },
+  {
+    "Country": "Nauru",
+    "Capital": "Yaren"
+  },
+  {
+    "Country": "Nepal",
+    "Capital": "Kathmandu"
+  },
+  {
+    "Country": "Niger",
+    "Capital": "Niamey"
+  },
+  {
+    "Country": "Nigeria",
+    "Capital": "Abuja"
+  },
+  {
+    "Country": "Nikaragua",
+    "Capital": "Managua"
+  },
+  {
+    "Country": "Norwegia",
+    "Capital": "Oslo"
+  },
+  {
+    "Country": "Oman",
+    "Capital": "Muskat"
+  },
+  {
+    "Country": "Pakistan",
+    "Capital": "Islamabad"
+  },
+  {
+    "Country": "Paraguay",
+    "Capital": "Asuncion"
+  },
+  {
+    "Country": "Perancis",
+    "Capital": "Paris"
+  },
+  {
+    "Country": "Peru",
+    "Capital": "Lima"
+  },
+  {
+    "Country": "Polandia",
+    "Capital": "Warsawa"
+  },
+  {
+    "Country": "Portugal",
+    "Capital": "Lisboa/Lisbon"
+  },
+  {
+    "Country": "Qatar",
+    "Capital": "Doha"
+  },
+  {
+    "Country": "Romania/Rumania",
+    "Capital": "Bukares"
+  },
+  {
+    "Country": "Rusia",
+    "Capital": "Moskow/Moskwa"
+  },
+  {
+    "Country": "Rwanda",
+    "Capital": "Kigali"
+  },
+  {
+    "Country": "Samoa",
+    "Capital": "Apia"
+  },
+  {
+    "Country": "Senegal",
+    "Capital": "Dakar"
+  },
+  {
+    "Country": "Serbia",
+    "Capital": "Beograd"
+  },
+  {
+    "Country": "Singapura",
+    "Capital": "Singapura"
+  },
+  {
+    "Country": "Siprus",
+    "Capital": "Nikosia"
+  },
+  {
+    "Country": "Slovenia",
+    "Capital": "Ljubljana"
+  },
+  {
+    "Country": "Slowakia",
+    "Capital": "Bratislava"
+  },
+  {
+    "Country": "Somalia",
+    "Capital": "Mogadishu"
+  },
+  {
+    "Country": "Spanyol",
+    "Capital": "Madrid"
+  },
+  {
+    "Country": "Sudan",
+    "Capital": "Khartoum"
+  },
+  {
+    "Country": "Suriah",
+    "Capital": "Damaskus"
+  },
+  {
+    "Country": "Suriname",
+    "Capital": "Paramaribo"
+  },
+  {
+    "Country": "Swedia",
+    "Capital": "Stockholm"
+  },
+  {
+    "Country": "Swiss",
+    "Capital": "Bern"
+  },
+  {
+    "Country": "Taiwan",
+    "Capital": "Taipei"
+  },
+  {
+    "Country": "Tajikistan",
+    "Capital": "Dushanbe"
+  },
+  {
+    "Country": "Thailand",
+    "Capital": "Bangkok"
+  },
+  {
+    "Country": "Tiongkok",
+    "Capital": "Beijing"
+  },
+  {
+    "Country": "Tunisia",
+    "Capital": "Tunis"
+  },
+  {
+    "Country": "Turki",
+    "Capital": "Ankara"
+  },
+  {
+    "Country": "Turkmenistan",
+    "Capital": "Ashgabat"
+  },
+  {
+    "Country": "Tuvalu",
+    "Capital": "Funafuti"
+  },
+  {
+    "Country": "Uganda",
+    "Capital": "Kampala"
+  },
+  {
+    "Country": "Ukraina",
+    "Capital": "Kiev"
+  },
+  {
+    "Country": "Uruguay",
+    "Capital": "Montevideo"
+  },
+  {
+    "Country": "Uzbekistan",
+    "Capital": "Tashkent"
+  },
+  {
+    "Country": "Venezuela",
+    "Capital": "Caracas"
+  },
+  {
+    "Country": "Vietnam",
+    "Capital": "Hanoi"
+  },
+  {
+    "Country": "Yaman",
+    "Capital": "Sanaa"
+  },
+  {
+    "Country": "Yordania",
+    "Capital": "Amman"
+  },
+  {
+    "Country": "Yunani",
+    "Capital": "Athena/Atena"
+  },
+  {
+    "Country": "Zambia",
+    "Capital": "Lusaka"
+  },
+  {
+    "Country": "Zimbabwe",
+    "Capital": "Harare"
+  }
+]

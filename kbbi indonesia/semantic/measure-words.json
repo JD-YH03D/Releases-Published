@@ -1,0 +1,38 @@
+[
+  {
+    "Thing": "apel",
+    "Counter": "buah"
+  },
+  {
+    "Thing": "berat",
+    "Counter": "gram/kg/kilogram"
+  },
+  {
+    "Thing": "jalan",
+    "Counter": "kilometer"
+  },
+  {
+    "Thing": "kacang",
+    "Counter": "biji"
+  },
+  {
+    "Thing": "kain",
+    "Counter": "meter"
+  },
+  {
+    "Thing": "kertas",
+    "Counter": "lembar/helai"
+  },
+  {
+    "Thing": "kue",
+    "Counter": "buah"
+  },
+  {
+    "Thing": "rambut",
+    "Counter": "helai"
+  },
+  {
+    "Thing": "telur",
+    "Counter": "butir"
+  }
+]
