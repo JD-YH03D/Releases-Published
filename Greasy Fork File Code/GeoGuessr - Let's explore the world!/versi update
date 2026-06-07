@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         🏆 #1. GeoGuessr A.M.A.S (Advanced Mapping Analysis System)
 // @namespace    https://github.com/JD-YH03D/release
-// @version      2.1.1
+// @version      2.1.2
 // @description  Professional GeoGuessr enhancement suite featuring real-time map analysis, coordinate intelligence, metadata extraction, and advanced exploration utilities.
 // @author       Bintang Toba Pro
 // @license      MIT
@@ -22,8 +22,8 @@
 // @connect      npoint.io
 // @run-at       document-idle
 // @icon         https://raw.githubusercontent.com/JD-YH03D/BintangToba/main/icon.svg
-// @downloadURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js
-// @updateURL https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.meta.js
+// @downloadURL https://update.greasyfork.org/scripts/578278/%F0%9F%8F%86%201%20GeoGuessr%20AMAS%20%28Advanced%20Mapping%20Analysis%20System%29.user.js
+// @updateURL https://update.greasyfork.org/scripts/578278/%F0%9F%8F%86%201%20GeoGuessr%20AMAS%20%28Advanced%20Mapping%20Analysis%20System%29.meta.js
 // ==/UserScript==
 
 /* global google, L */
@@ -68,7 +68,7 @@ AUTO PIN MODE:
  * - Safe mode for anti-detection
  * @ __btpDebug.getProtectionState()
  * @author Bintang Toba Pro
- * @version 2.1.1
+ * @version 2.1.2
  * @license MIT
  * ============================================================================
  */
@@ -87,13 +87,13 @@ AUTO PIN MODE:
     const CONFIG = Object.freeze({
 
         NAME: 'Bintang Toba Pro',
-        VERSION: '2.1.1',
+        VERSION: '2.1.2',
         DEBUG: false, // Set to true for verbose logging
 
         NOMINATIM_URL: 'https://nominatim.openstreetmap.org/reverse',
         LEAFLET_CSS: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
         LEAFLET_JS: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-        VERSION_METADATA_URL: 'https://api.npoint.io/65be7341bb21bbcf9458',
+        VERSION_METADATA_URL: 'https://api.npoint.io/1e372530fb1113d8afc6',
 
         STORAGE_KEYS: Object.freeze({
             DISCORD_WEBHOOK: 'bintang_toba_discord_webhook',
@@ -102,6 +102,10 @@ AUTO PIN MODE:
             MAP_LAYER: 'bintang_toba_map_layer',
             THEME: 'bintang_toba_theme_mode',
             UI_SCALE: 'bintang_toba_ui_scale',
+            JITTER_DISTANCE: 'bintang_toba_jitter_distance',
+            JITTER_UNIT: 'bintang_toba_jitter_unit',
+            UI_LEFT: 'bintang_toba_ui_left',
+            UI_TOP: 'bintang_toba_ui_top',
             FEATURES: 'bintang_toba_features',
             DEBUG: 'bintang_toba_debug',
             INTEGRITY_CACHE: 'bintang_toba_integrity_cache',
@@ -240,7 +244,9 @@ AUTO PIN MODE:
             MAP_LAYER: 'default',
             THEME: 'dark',
             UI_SCALE: 'normal',
-            PRESET: 'exact'
+            PRESET: 'exact',
+            JITTER_DISTANCE: 150,
+            JITTER_UNIT: 'm'
         }),
 
         FLAGS: Object.freeze({
@@ -281,6 +287,8 @@ AUTO PIN MODE:
         currentMapLayer: CONFIG.DEFAULTS.MAP_LAYER,
         themeMode: CONFIG.DEFAULTS.THEME,
         uiScale: CONFIG.DEFAULTS.UI_SCALE,
+        jitterDistance: CONFIG.DEFAULTS.JITTER_DISTANCE,
+        jitterUnit: CONFIG.DEFAULTS.JITTER_UNIT,
 
         roundHistory: [],
         lastImportBackup: null,
@@ -754,8 +762,30 @@ AUTO PIN MODE:
 
         isValidUiScale(scaleName) {
             return scaleName && CONFIG.UI_SCALES.hasOwnProperty(scaleName);
+        },
+
+        isValidJitterUnit(unit) {
+            return unit === 'm' || unit === 'km';
+        },
+
+        isValidJitterDistance(value) {
+            const n = Number(value);
+            return Number.isFinite(n) && n >= 0 && n <= 10000;
         }
     };
+
+    function normalizeJitterUnit(unit) {
+        return Validators.isValidJitterUnit(unit) ? unit : CONFIG.DEFAULTS.JITTER_UNIT;
+    }
+
+    function normalizeJitterDistance(value, unit) {
+        const normalizedUnit = normalizeJitterUnit(unit);
+        const step = normalizedUnit === 'km' ? 5 : 50;
+        const n = Number(value);
+        if (!Number.isFinite(n)) return CONFIG.DEFAULTS.JITTER_DISTANCE;
+        const clamped = Math.min(10000, Math.max(0, n));
+        return Math.round(clamped / step) * step;
+    }
 
     const Throttle = {
 
@@ -840,6 +870,12 @@ AUTO PIN MODE:
             uiScale = CONFIG.DEFAULTS.UI_SCALE;
         }
 
+        const jitterUnit = normalizeJitterUnit(safeGM_getValue(CONFIG.STORAGE_KEYS.JITTER_UNIT, CONFIG.DEFAULTS.JITTER_UNIT));
+        const jitterDistance = normalizeJitterDistance(
+            safeGM_getValue(CONFIG.STORAGE_KEYS.JITTER_DISTANCE, CONFIG.DEFAULTS.JITTER_DISTANCE),
+            jitterUnit
+        );
+
         return {
             hotkeys,
             features,
@@ -847,6 +883,8 @@ AUTO PIN MODE:
             mapLayer,
             themeMode: 'dark',
             uiScale,
+            jitterDistance,
+            jitterUnit,
             discordWebhook: String(safeGM_getValue(CONFIG.STORAGE_KEYS.DISCORD_WEBHOOK, '') || '').trim()
         };
     }
@@ -859,6 +897,8 @@ AUTO PIN MODE:
         state.currentMapLayer = Validators.isValidMapLayer(s.mapLayer) ? s.mapLayer : CONFIG.DEFAULTS.MAP_LAYER;
         state.themeMode = 'dark';
         state.uiScale = Validators.isValidUiScale(s.uiScale) ? s.uiScale : CONFIG.DEFAULTS.UI_SCALE;
+        state.jitterUnit = normalizeJitterUnit(s.jitterUnit);
+        state.jitterDistance = normalizeJitterDistance(s.jitterDistance, state.jitterUnit);
     }
 
     function getCurrentSettingsSnapshot(overrides = null) {
@@ -869,6 +909,8 @@ AUTO PIN MODE:
             mapLayer: state.currentMapLayer || CONFIG.DEFAULTS.MAP_LAYER,
             themeMode: 'dark',
             uiScale: state.uiScale || CONFIG.DEFAULTS.UI_SCALE,
+            jitterDistance: state.jitterDistance ?? CONFIG.DEFAULTS.JITTER_DISTANCE,
+            jitterUnit: state.jitterUnit || CONFIG.DEFAULTS.JITTER_UNIT,
             discordWebhook: String(safeGM_getValue(CONFIG.STORAGE_KEYS.DISCORD_WEBHOOK, '') || '').trim()
         };
 
@@ -882,6 +924,8 @@ AUTO PIN MODE:
         next.preset = Validators.isValidPreset(next.preset) ? next.preset : detectPresetFromFeatures(next.features);
         next.mapLayer = Validators.isValidMapLayer(next.mapLayer) ? next.mapLayer : CONFIG.DEFAULTS.MAP_LAYER;
         next.uiScale = Validators.isValidUiScale(next.uiScale) ? next.uiScale : CONFIG.DEFAULTS.UI_SCALE;
+        next.jitterUnit = normalizeJitterUnit(next.jitterUnit);
+        next.jitterDistance = normalizeJitterDistance(next.jitterDistance, next.jitterUnit);
         next.themeMode = 'dark';
         next.discordWebhook = String(next.discordWebhook || '').trim();
 
@@ -896,6 +940,8 @@ AUTO PIN MODE:
         safeGM_setValue(CONFIG.STORAGE_KEYS.MAP_LAYER, s.mapLayer);
         safeGM_setValue(CONFIG.STORAGE_KEYS.THEME, 'dark');
         safeGM_setValue(CONFIG.STORAGE_KEYS.UI_SCALE, s.uiScale);
+        safeGM_setValue(CONFIG.STORAGE_KEYS.JITTER_DISTANCE, s.jitterDistance);
+        safeGM_setValue(CONFIG.STORAGE_KEYS.JITTER_UNIT, s.jitterUnit);
         safeGM_setValue(CONFIG.STORAGE_KEYS.DISCORD_WEBHOOK, s.discordWebhook);
         invalidateHotkeyCache();
         return s;
@@ -909,6 +955,8 @@ AUTO PIN MODE:
             mapLayer: CONFIG.DEFAULTS.MAP_LAYER,
             themeMode: 'dark',
             uiScale: CONFIG.DEFAULTS.UI_SCALE,
+            jitterDistance: CONFIG.DEFAULTS.JITTER_DISTANCE,
+            jitterUnit: CONFIG.DEFAULTS.JITTER_UNIT,
             discordWebhook: ''
         };
 
@@ -1277,76 +1325,76 @@ AUTO PIN MODE:
                 }
                 .btp-btn-secondary:active { transform: translateY(0); }
             `;
-            document.head.appendChild(style);
+                document.head.appendChild(style);
+            }
+
+            root = document.createElement('div');
+            root.id = PROTECTION_OVERLAY_ID;
+            root.style.cssText = [
+                'position:fixed',
+                'inset:0',
+                'z-index:2147483646',
+                'display:flex',
+                'align-items:center',
+                'justify-content:center',
+                'background:rgba(8, 10, 19, 0.8)',
+                'backdrop-filter:blur(16px)',
+                '-webkit-backdrop-filter:blur(16px)',
+                'animation:btpFadeIn .3s cubic-bezier(0.16, 1, 0.3, 1)',
+                'padding:20px'
+            ].join(';');
+
+            root.innerHTML =
+                '<div style="width:min(580px,100%); background:linear-gradient(180deg, #0f1424 0%, #090d1a 100%); border:1px solid rgba(59, 130, 246, 0.2); border-radius:24px; box-shadow:0 30px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding:32px; color:#f1f5f9; font-family:system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; animation:btpScaleIn .4s cubic-bezier(0.16, 1, 0.3, 1); box-sizing:border-box;">' +
+                    '<div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;">' +
+                        '<div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:20px; box-shadow:0 0 20px rgba(239, 68, 68, 0.3); flex-shrink:0;">' +
+                            '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' +
+                        '</div>' +
+                        '<div style="flex:1;">' +
+                            '<div style="font-size:20px; font-weight:700; letter-spacing:-0.2px; color:#ffffff; margin-bottom:4px;">Bintang Toba Pro Integrity</div>' +
+                            '<div id="btp-protection-subtitle" style="font-size:13px; font-weight:500; color:#3b82f6; text-transform:uppercase; letter-spacing:0.5px;"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div id="btp-protection-reason" style="font-size:14px; line-height:1.6; color:#94a3b8; background:rgba(30, 41, 59, 0.3); border:1px solid rgba(255,255,255,0.03); padding:16px; border-radius:14px; margin-bottom:24px;"></div>' +
+                    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px;">' +
+                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
+                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Current Version</div>' +
+                            '<div id="btp-protection-current" style="font-size:15px; font-weight:600; color:#f8fafc; font-family:monospace;"></div>' +
+                        '</div>' +
+                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
+                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Latest Official</div>' +
+                            '<div id="btp-protection-latest" style="font-size:15px; font-weight:600; color:#10b981; font-family:monospace;"></div>' +
+                        '</div>' +
+                        '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:16px; grid-column:span 2;">' +
+                            '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Integrity Status</div>' +
+                            '<div id="btp-protection-integrity" style="font-size:15px; font-weight:600; color:#f43f5e; margin-bottom:6px;"></div>' +
+                            '<div id="btp-protection-message" style="font-size:13px; color:#94a3b8; line-height:1.4;"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:flex; gap:12px; flex-wrap:wrap;">' +
+                        '<button id="btp-protection-update" class="btp-btn-primary">Update Official Build</button>' +
+                        '<button id="btp-protection-github" class="btp-btn-secondary">Open GitHub Source</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(root);
+            telemetryInc('protection.overlayShows');
+
+            const updateBtn = root.querySelector('#btp-protection-update');
+            if (updateBtn) {
+                updateBtn.onclick = () => {
+                    const url = 'https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js';
+                    window.open(url, '_blank');
+                };
+            }
+
+            const githubBtn = root.querySelector('#btp-protection-github');
+            if (githubBtn) {
+                githubBtn.onclick = () => {
+                    window.open(getGithubProjectUrl(), '_blank');
+                };
+            }
         }
-
-        root = document.createElement('div');
-        root.id = PROTECTION_OVERLAY_ID;
-        root.style.cssText = [
-            'position:fixed',
-            'inset:0',
-            'z-index:2147483646',
-            'display:flex',
-            'align-items:center',
-            'justify-content:center',
-            'background:rgba(8, 10, 19, 0.8)',
-            'backdrop-filter:blur(16px)',
-            '-webkit-backdrop-filter:blur(16px)',
-            'animation:btpFadeIn .3s cubic-bezier(0.16, 1, 0.3, 1)',
-            'padding:20px'
-        ].join(';');
-
-        root.innerHTML =
-            '<div style="width:min(580px,100%); background:linear-gradient(180deg, #0f1424 0%, #090d1a 100%); border:1px solid rgba(59, 130, 246, 0.2); border-radius:24px; box-shadow:0 30px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding:32px; color:#f1f5f9; font-family:system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; animation:btpScaleIn .4s cubic-bezier(0.16, 1, 0.3, 1); box-sizing:border-box;">' +
-                '<div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;">' +
-                    '<div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:20px; box-shadow:0 0 20px rgba(239, 68, 68, 0.3); flex-shrink:0;">' +
-                        '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' +
-                    '</div>' +
-                    '<div style="flex:1;">' +
-                        '<div style="font-size:20px; font-weight:700; letter-spacing:-0.2px; color:#ffffff; margin-bottom:4px;">Bintang Toba Pro Integrity</div>' +
-                        '<div id="btp-protection-subtitle" style="font-size:13px; font-weight:500; color:#3b82f6; text-transform:uppercase; letter-spacing:0.5px;"></div>' +
-                    '</div>' +
-                '</div>' +
-                '<div id="btp-protection-reason" style="font-size:14px; line-height:1.6; color:#94a3b8; background:rgba(30, 41, 59, 0.3); border:1px solid rgba(255,255,255,0.03); padding:16px; border-radius:14px; margin-bottom:24px;"></div>' +
-                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px;">' +
-                    '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
-                        '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Current Version</div>' +
-                        '<div id="btp-protection-current" style="font-size:15px; font-weight:600; color:#f8fafc; font-family:monospace;"></div>' +
-                    '</div>' +
-                    '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:14px 16px;">' +
-                        '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Latest Official</div>' +
-                        '<div id="btp-protection-latest" style="font-size:15px; font-weight:600; color:#10b981; font-family:monospace;"></div>' +
-                    '</div>' +
-                    '<div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.04); border-radius:14px; padding:16px; grid-column:span 2;">' +
-                        '<div style="font-size:12px; color:#64748b; font-weight:500; margin-bottom:4px;">Integrity Status</div>' +
-                        '<div id="btp-protection-integrity" style="font-size:15px; font-weight:600; color:#f43f5e; margin-bottom:6px;"></div>' +
-                        '<div id="btp-protection-message" style="font-size:13px; color:#94a3b8; line-height:1.4;"></div>' +
-                    '</div>' +
-                '</div>' +
-                '<div style="display:flex; gap:12px; flex-wrap:wrap;">' +
-                    '<button id="btp-protection-update" class="btp-btn-primary">Update Official Build</button>' +
-                    '<button id="btp-protection-github" class="btp-btn-secondary">Open GitHub Source</button>' +
-                '</div>' +
-            '</div>';
-
-        document.body.appendChild(root);
-        telemetryInc('protection.overlayShows');
-
-        const updateBtn = root.querySelector('#btp-protection-update');
-        if (updateBtn) {
-            updateBtn.onclick = () => {
-                const url = 'https://update.greasyfork.org/scripts/578278/GeoGuessr%20-%20Let%27s%20explore%20the%20world%21.user.js';
-                window.open(url, '_blank');
-            };
-        }
-
-        const githubBtn = root.querySelector('#btp-protection-github');
-        if (githubBtn) {
-            githubBtn.onclick = () => {
-                window.open(getGithubProjectUrl(), '_blank');
-            };
-        }
-    }
 
         const subtitle = root.querySelector('#btp-protection-subtitle');
         const reason = root.querySelector('#btp-protection-reason');
@@ -1900,6 +1948,7 @@ AUTO PIN MODE:
         updateToggle('geohelper-auto-marker', !!state.features?.autoMarker);
         updateToggle('geohelper-auto-pin', !!state.features?.autoPin);
         updateToggle('geohelper-safe-mode', !!state.features?.safeMode);
+        setJitterControlsUi(wrap);
     }
 
     function setPresetButtonsUi(container) {
@@ -1958,6 +2007,42 @@ AUTO PIN MODE:
 
         const label = wrap.querySelector('#geohelper-scale-status');
         if (label) label.textContent = `SCALE: ${(state.uiScale || CONFIG.DEFAULTS.UI_SCALE).toUpperCase()}`;
+    }
+
+    function setJitterControlsUi(container) {
+        const wrap = container || document.getElementById('geohelper-phone-frame') || state.panel;
+        if (!wrap) return;
+
+        const jitterBox = wrap.querySelector('#geohelper-jitter-controls-box');
+        const jitterRange = wrap.querySelector('#geohelper-jitter-range');
+        const jitterUnit = wrap.querySelector('#geohelper-jitter-unit');
+        const jitterLabel = wrap.querySelector('#geohelper-jitter-label');
+
+        if (!jitterRange || !jitterUnit || !jitterLabel) return;
+
+        state.jitterUnit = normalizeJitterUnit(state.jitterUnit);
+        state.jitterDistance = normalizeJitterDistance(state.jitterDistance, state.jitterUnit);
+
+        jitterUnit.value = state.jitterUnit;
+        jitterRange.min = '0';
+        jitterRange.max = '10000';
+        jitterRange.step = state.jitterUnit === 'km' ? '5' : '50';
+        jitterRange.value = String(state.jitterDistance);
+
+        const unitLabel = state.jitterUnit === 'km' ? 'km' : 'm';
+        jitterLabel.textContent = `Random Limits: 0 - ${Number(state.jitterDistance).toLocaleString('en-US')} ${unitLabel}`;
+
+        if (jitterBox) {
+            const enabled = !!state.features?.safeMode;
+            jitterBox.style.display = enabled ? 'block' : 'none';
+            jitterBox.style.opacity = enabled ? '1' : '0';
+            jitterBox.style.pointerEvents = enabled ? 'auto' : 'none';
+            jitterBox.style.maxHeight = enabled ? '140px' : '0px';
+            jitterBox.style.marginTop = enabled ? '10px' : '0px';
+            jitterBox.style.padding = enabled ? '12px' : '0';
+            jitterBox.style.borderWidth = enabled ? '1px' : '0px';
+            jitterBox.style.overflow = 'hidden';
+        }
     }
 
     function setMapLayerButtonsUi(container) {
@@ -2463,6 +2548,7 @@ AUTO PIN MODE:
             const { lat, lng, resolve, reject } = addressQueue.shift();
 
             const url = `${CONFIG.NOMINATIM_URL}?lat=${lat}&lon=${lng}&format=json&accept-language=en`;
+            const nominatimUserAgent = `GeoGuessrAMAS/${CONFIG.VERSION} (contact: github.com/JD-YH03D/release)`;
 
             const handleResponse = (data) => {
                 lastAddressCall = Date.now();
@@ -2494,7 +2580,10 @@ AUTO PIN MODE:
                 GM_xmlhttpRequest({
                     method: 'GET',
                     url: url,
-                    headers: { 'Accept': 'application/json' },
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': nominatimUserAgent
+                    },
                     timeout: 10000, // BUG FIX: prevent hanging requests
                     onload: (res) => {
                         if (res.status === 200) {
@@ -2515,7 +2604,10 @@ AUTO PIN MODE:
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                 fetch(url, {
-                    headers: { 'Accept': 'application/json' },
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': nominatimUserAgent
+                    },
                     signal: controller.signal
                 })
                     .then(res => {
@@ -2967,6 +3059,7 @@ AUTO PIN MODE:
         setPresetButtonsUi(panel);
         setThemeButtonsUi(panel);
         setUiScaleButtonsUi(panel);
+        setJitterControlsUi(panel);
         setMapLayerButtonsUi(panel);
         applyPhoneLikeButtonTheme(panel);
     }
@@ -2975,29 +3068,147 @@ AUTO PIN MODE:
     // [SECTION 18] MARKER PLACEMENT
     // ========================================================================
 
-    function applySafeMode(coords) {
+    let streetViewService = null;
+
+    function getJitterDistanceMeters(distance, unit) {
+        const normalizedUnit = normalizeJitterUnit(unit);
+        const normalizedDistance = normalizeJitterDistance(distance, normalizedUnit);
+        return normalizedUnit === 'km' ? normalizedDistance * 1000 : normalizedDistance;
+    }
+
+    async function getNearestStreetView(coords, maxRadiusMeters) {
+        if (!Validators.isValidCoord(coords?.lat, coords?.lng)) return null;
+        if (typeof google === 'undefined' || !google.maps || !google.maps.StreetViewService) return null;
+
+        if (!streetViewService) {
+            streetViewService = new google.maps.StreetViewService();
+        }
+
+        const request = {
+            location: new google.maps.LatLng(coords.lat, coords.lng),
+            radius: Math.max(50, Math.round(Number(maxRadiusMeters) || 150)),
+            source: google.maps.StreetViewSource?.OUTDOOR || undefined
+        };
+
+        return new Promise((resolve) => {
+            try {
+                streetViewService.getPanorama(request, (data, status) => {
+                    if (status === google.maps.StreetViewStatus.OK && data?.location?.latLng) {
+                        const latLng = data.location.latLng;
+                        const lat = typeof latLng.lat === 'function' ? latLng.lat() : latLng.lat;
+                        const lng = typeof latLng.lng === 'function' ? latLng.lng() : latLng.lng;
+                        if (Validators.isValidCoord(lat, lng)) {
+                            resolve({ lat, lng });
+                            return;
+                        }
+                    }
+                    resolve(null);
+                });
+            } catch (e) {
+                resolve(null);
+            }
+        });
+    }
+
+    async function generateSafeLandCoordinate(originalCoords, maxDistance, unit) {
+        if (!Validators.isValidCoord(originalCoords?.lat, originalCoords?.lng)) {
+            return originalCoords;
+        }
+
+        const maxDistanceMeters = getJitterDistanceMeters(maxDistance, unit);
+        if (maxDistanceMeters <= 0) {
+            return originalCoords;
+        }
+
+        updateStatusText('Checking land...', '#fbbf24');
+        updateLedIndicator('refreshing');
+
+        let fallback = null;
+        const earthRadiusMeters = 6378137;
+        const DEG2RAD = Math.PI / 180;
+        const RAD2DEG = 180 / Math.PI;
+
+        // Scale attempts & search radius based on jitter magnitude
+        const maxAttempts = maxDistanceMeters > 100000 ? 16 : (maxDistanceMeters > 50000 ? 12 : (maxDistanceMeters > 5000 ? 8 : 5));
+        const svSearchRadius = Math.min(50000, Math.max(150, maxDistanceMeters * 0.5));
+        const minDistanceMeters = maxDistanceMeters >= 10000
+            ? Math.min(maxDistanceMeters * 0.6, Math.max(1000, maxDistanceMeters * 0.05))
+            : 0;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const angle = Math.random() * 2 * Math.PI;
+            // Bounded random with outward weight to avoid repeatedly selecting near-zero offsets.
+            const distanceMeters = minDistanceMeters +
+                (Math.sqrt(Math.random()) * (maxDistanceMeters - minDistanceMeters));
+
+            // Spherical offset using Haversine-based forward projection
+            const baseLat = originalCoords.lat;
+            const baseLng = originalCoords.lng;
+            const baseLatRad = baseLat * DEG2RAD;
+            const cosBaseLat = Math.max(0.01, Math.cos(baseLatRad));
+
+            const dLatRad = (distanceMeters * Math.cos(angle)) / earthRadiusMeters;
+            const dLngRad = (distanceMeters * Math.sin(angle)) / (earthRadiusMeters * cosBaseLat);
+
+            // Compute raw candidate coordinates
+            let candidateLat = baseLat + (dLatRad * RAD2DEG);
+            let candidateLng = baseLng + (dLngRad * RAD2DEG);
+
+            // FIX: Clamp latitude to valid playable range (-85..85) to avoid polar distortion
+            candidateLat = Math.max(-85, Math.min(85, candidateLat));
+
+            // FIX: Wrap longitude to -180..180 range (handles dateline crossings)
+            candidateLng = ((candidateLng + 540) % 360) - 180;
+
+            const candidate = { lat: candidateLat, lng: candidateLng };
+
+            if (!Validators.isValidCoord(candidate.lat, candidate.lng)) continue;
+            fallback = candidate; // Always track latest valid random candidate
+
+            Logger.debug('🎲 Jitter attempt', attempt + 1, ':', candidate.lat.toFixed(4), candidate.lng.toFixed(4),
+                         '| dist:', Math.round(distanceMeters / 1000) + 'km');
+
+            // Try to snap to nearest StreetView (guarantees land placement)
+            const snapped = await getNearestStreetView(candidate, svSearchRadius);
+            if (snapped && Validators.isValidCoord(snapped.lat, snapped.lng)) {
+                updateStatusText('Ready', '#4ade80');
+                updateLedIndicator('ready');
+                Logger.info('🎯 Safe land coordinate found (attempt ' + (attempt + 1) + '):',
+                            snapped.lat.toFixed(6), snapped.lng.toFixed(6));
+                return snapped;
+            }
+        }
+
+        updateStatusText('Ready', '#4ade80');
+        updateLedIndicator('ready');
+
+        // Return last valid random candidate as fallback (no StreetView snap available)
+        if (fallback) {
+            Logger.info('🎯 Jitter fallback (no StreetView):', fallback.lat.toFixed(6), fallback.lng.toFixed(6));
+            return fallback;
+        }
+
+        // Ultimate safety net: should never reach here
+        Logger.warn('🎯 Jitter: all attempts produced invalid coords, returning original');
+        return originalCoords;
+    }
+
+    async function applySafeMode(coords) {
         if (!state.features?.safeMode) {
             return coords;
         }
 
-        const maxOffset = CONFIG.MAP.SAFE_MODE_OFFSET_DEGREES;
-        const latOffset = (Math.random() - 0.5) * 2 * maxOffset;
-        const lngOffset = (Math.random() - 0.5) * 2 * maxOffset;
-
-        return {
-            lat: coords.lat + latOffset,
-            lng: coords.lng + lngOffset
-        };
+        return generateSafeLandCoordinate(coords, state.jitterDistance, state.jitterUnit);
     }
 
-    function toggleMarker(forceCoords = null) {
+    async function toggleMarker(forceCoords = null) {
         const coords = forceCoords || extractCoordinates();
         if (!coords || !Validators.isValidCoord(coords.lat, coords.lng)) {
             Logger.debug('No valid coordinates');
             return false;
         }
 
-        const finalCoords = applySafeMode(coords);
+        const finalCoords = await applySafeMode(coords);
 
         if (state.marker) {
             try {
@@ -3041,7 +3252,7 @@ AUTO PIN MODE:
         return false;
     }
 
-    function autoPlaceMarker() {
+    async function autoPlaceMarker() {
         if (!state.features?.autoMarker) return;
         if (state.markerPlacedThisRound) return;
 
@@ -3049,12 +3260,12 @@ AUTO PIN MODE:
         if (!coords || !Validators.isValidCoord(coords.lat, coords.lng)) return;
 
         if (state.features?.autoPin) {
-            const ok = placeGuessOnMap(!!state.features?.safeMode);
+            const ok = await placeGuessOnMap(!!state.features?.safeMode);
             if (ok) state.markerPlacedThisRound = true;
             return;
         }
 
-        const finalCoords = applySafeMode(coords);
+        const finalCoords = await applySafeMode(coords);
 
         if (state.marker) {
             try {
@@ -3245,7 +3456,7 @@ AUTO PIN MODE:
         };
     }
 
-    function placeGuessOnMap(withJitter = false) {
+    async function placeGuessOnMap(withJitter = false) {
         if (!guardProtectedUsage('Place Guess')) return false;
         if (!state.features?.autoPin) {
             updateStatusText('Auto Pin OFF', '#f59e0b');
@@ -3259,7 +3470,17 @@ AUTO PIN MODE:
             return false;
         }
 
-        const target = withJitter ? jitterCoordinates(raw.lat, raw.lng) : raw;
+        const target = withJitter
+            ? await generateSafeLandCoordinate(raw, state.jitterDistance, state.jitterUnit)
+            : raw;
+
+        if (withJitter) {
+            Logger.info('🎲 Safe jitter config:',
+                        Number(state.jitterDistance),
+                        state.jitterUnit,
+                        '| from:', raw.lat.toFixed(6), raw.lng.toFixed(6),
+                        '| to:', target.lat.toFixed(6), target.lng.toFixed(6));
+        }
 
         const ok = pinGuessToGameMap(target.lat, target.lng);
 
@@ -3282,7 +3503,7 @@ AUTO PIN MODE:
         try {
             const selectors = [
                 "[class*='guess-map_canvas']",
-                ".leaflet-container",
+                '.leaflet-container',
                 "[class*='mapCanvas']",
                 "[class*='map-canvas']",
                 "[data-qa*='map']",
@@ -3740,7 +3961,7 @@ AUTO PIN MODE:
     // [SECTION 23] KEYBOARD HANDLER
     // ========================================================================
 
-    function handleKeydown(e) {
+    async function handleKeydown(e) {
         if (isProtectionBlocked()) {
             Logger.debug('[Integrity] Hotkey blocked by protection');
             e.preventDefault();
@@ -3774,7 +3995,7 @@ AUTO PIN MODE:
             if (!Throttle.canRun('hk_marker', CONFIG.COOLDOWNS.MARKER)) return;
             e.preventDefault();
             if (!state.gameMap) findMapInstance();
-            toggleMarker();
+            await toggleMarker();
             return;
         }
 
@@ -3839,12 +4060,12 @@ AUTO PIN MODE:
             e.stopImmediatePropagation();
 
             if (state.features?.autoPin) {
-
-                placeGuessOnMap(false);
+                // Hotkey "1" in Auto Pin mode always uses configured jitter distance.
+                await placeGuessOnMap(true);
             } else {
 
                 if (!state.gameMap) findMapInstance();
-                const ok = toggleMarker();
+                const ok = await toggleMarker();
                 updateStatusText(ok ? 'Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
             }
             return;
@@ -3857,13 +4078,13 @@ AUTO PIN MODE:
 
             if (state.features?.autoPin) {
 
-                placeGuessOnMap(true);
+                await placeGuessOnMap(true);
             } else {
 
                 const prev = !!state.features?.safeMode;
                 state.features.safeMode = true;
                 if (!state.gameMap) findMapInstance();
-                const ok = toggleMarker();
+                const ok = await toggleMarker();
                 state.features.safeMode = prev;
                 updateStatusText(ok ? 'Safe Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
             }
@@ -4020,7 +4241,7 @@ AUTO PIN MODE:
                         }
 
                         try {
-                            autoPlaceMarker();
+                            await autoPlaceMarker();
                         } catch (e) {
                             Logger.debug('Auto marker error:', e?.message);
                         }
@@ -4340,13 +4561,13 @@ AUTO PIN MODE:
 
         const markBtn = document.getElementById('geohelper-action-mark');
         if (markBtn) {
-            markBtn.onclick = Throttle.createHandler('panel_mark_btn', 300, () => {
+            markBtn.onclick = Throttle.createHandler('panel_mark_btn', 300, async () => {
                 if (state.features?.autoPin) {
-                    const ok = placeGuessOnMap(false);
+                    const ok = await placeGuessOnMap(!!state.features?.safeMode);
                     flashActionButton(markBtn, ok ? 'Pinned!' : 'Error');
                 } else {
                     if (!state.gameMap) findMapInstance();
-                    const ok = toggleMarker();
+                    const ok = await toggleMarker();
                     updateStatusText(ok ? 'Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
                     flashActionButton(markBtn, ok ? 'Marked!' : 'Error');
                 }
@@ -4355,15 +4576,15 @@ AUTO PIN MODE:
 
         const safeBtn = document.getElementById('geohelper-action-safe');
         if (safeBtn) {
-            safeBtn.onclick = Throttle.createHandler('panel_safe_btn', 300, () => {
+            safeBtn.onclick = Throttle.createHandler('panel_safe_btn', 300, async () => {
                 if (state.features?.autoPin) {
-                    const ok = placeGuessOnMap(true);
+                    const ok = await placeGuessOnMap(true);
                     flashActionButton(safeBtn, ok ? 'Safe Pin!' : 'Error');
                 } else {
                     const prev = !!state.features?.safeMode;
                     state.features.safeMode = true;
                     if (!state.gameMap) findMapInstance();
-                    const ok = toggleMarker();
+                    const ok = await toggleMarker();
                     state.features.safeMode = prev;
                     updateStatusText(ok ? 'Safe Marked' : 'No map', ok ? '#4ade80' : '#ef4444');
                     flashActionButton(safeBtn, ok ? 'Safe Set!' : 'Error');
@@ -4404,6 +4625,53 @@ AUTO PIN MODE:
         };
     }
 
+    function bindJitterControls(phoneFrame) {
+        const jitterBox = phoneFrame.querySelector('#geohelper-jitter-controls-box');
+        const jitterRange = phoneFrame.querySelector('#geohelper-jitter-range');
+        const jitterUnit = phoneFrame.querySelector('#geohelper-jitter-unit');
+        const jitterLabel = phoneFrame.querySelector('#geohelper-jitter-label');
+        if (!jitterRange || !jitterUnit || !jitterLabel) return;
+
+        const syncStepAndValue = () => {
+            state.jitterUnit = normalizeJitterUnit(jitterUnit.value);
+            jitterRange.step = state.jitterUnit === 'km' ? '5' : '50';
+            state.jitterDistance = normalizeJitterDistance(jitterRange.value, state.jitterUnit);
+            jitterRange.value = String(state.jitterDistance);
+        };
+
+        const updateLabel = () => {
+            const unitLabel = state.jitterUnit === 'km' ? 'km' : 'm';
+            jitterLabel.textContent = `Random Limits: 0 - ${Number(state.jitterDistance).toLocaleString('en-US')} ${unitLabel}`;
+        };
+
+        const persistJitterSettings = () => {
+            safeGM_setValue(CONFIG.STORAGE_KEYS.JITTER_DISTANCE, state.jitterDistance);
+            safeGM_setValue(CONFIG.STORAGE_KEYS.JITTER_UNIT, state.jitterUnit);
+        };
+
+        syncStepAndValue();
+        updateLabel();
+
+        jitterRange.addEventListener('input', () => {
+            state.jitterDistance = normalizeJitterDistance(jitterRange.value, jitterUnit.value);
+            updateLabel();
+        });
+
+        jitterRange.addEventListener('change', () => {
+            syncStepAndValue();
+            updateLabel();
+            persistJitterSettings();
+        });
+
+        jitterUnit.addEventListener('change', () => {
+            syncStepAndValue();
+            updateLabel();
+            persistJitterSettings();
+        });
+
+        setJitterControlsUi(phoneFrame);
+    }
+
     function bindSaveResetControls(phoneFrame) {
         const saveBtn = phoneFrame.querySelector('#geohelper-save');
         if (saveBtn) {
@@ -4422,6 +4690,8 @@ AUTO PIN MODE:
                     preset: state.currentPreset,
                     mapLayer: state.currentMapLayer,
                     uiScale: state.uiScale,
+                    jitterDistance: state.jitterDistance,
+                    jitterUnit: state.jitterUnit,
                     discordWebhook: webhook
                 });
 
@@ -4499,6 +4769,7 @@ AUTO PIN MODE:
         if (!phoneFrame) return;
         bindPresetAndLayerControls(phoneFrame);
         bindScaleControl(phoneFrame);
+        bindJitterControls(phoneFrame);
         bindSaveResetControls(phoneFrame);
         bindFeatureToggles(phoneFrame);
         bindSessionControls(phoneFrame);
@@ -4672,6 +4943,12 @@ AUTO PIN MODE:
             phoneFrame.style.top = y + 'px';
         };
 
+        const persistCurrentPosition = () => {
+            const rect = phoneFrame.getBoundingClientRect();
+            safeGM_setValue(CONFIG.STORAGE_KEYS.UI_LEFT, Math.round(rect.left));
+            safeGM_setValue(CONFIG.STORAGE_KEYS.UI_TOP, Math.round(rect.top));
+        };
+
         const onMouseMove = (e) => {
             if (!dragActive) return;
             applyPosition(e.clientX - dragOffsetX, e.clientY - dragOffsetY);
@@ -4683,6 +4960,7 @@ AUTO PIN MODE:
             statusBar.style.cursor = 'grab';
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', endMouseDrag);
+            persistCurrentPosition();
         };
 
         statusBar.addEventListener('mousedown', (e) => {
@@ -4713,6 +4991,7 @@ AUTO PIN MODE:
             document.removeEventListener('touchmove', onTouchMove);
             document.removeEventListener('touchend', endTouchDrag);
             document.removeEventListener('touchcancel', endTouchDrag);
+            persistCurrentPosition();
         };
 
         statusBar.addEventListener('touchstart', (e) => {
@@ -4736,8 +5015,12 @@ AUTO PIN MODE:
 
         setTimeout(() => {
             const margin = 12;
-            const x = Math.max(margin, window.innerWidth - (phoneFrame.offsetWidth || 320) - margin);
-            const y = Math.max(margin, window.innerHeight - (phoneFrame.offsetHeight || 560) - margin);
+            const fallbackX = Math.max(margin, window.innerWidth - (phoneFrame.offsetWidth || 320) - margin);
+            const fallbackY = Math.max(margin, window.innerHeight - (phoneFrame.offsetHeight || 560) - margin);
+            const storedX = Number(safeGM_getValue(CONFIG.STORAGE_KEYS.UI_LEFT, fallbackX));
+            const storedY = Number(safeGM_getValue(CONFIG.STORAGE_KEYS.UI_TOP, fallbackY));
+            const x = Number.isFinite(storedX) ? storedX : fallbackX;
+            const y = Number.isFinite(storedY) ? storedY : fallbackY;
             applyPosition(x, y);
         }, 0);
 
@@ -4764,8 +5047,9 @@ AUTO PIN MODE:
         '<div style="display:flex;align-items:center;gap:10px;">' +
             '<span style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:0.3px;">' + Security.escapeHtml(CONFIG.NAME) + '</span>' +
             '<div style="display:flex;gap:6px;align-items:center;">' +
+                '<span>🌏</span>' +
+                '<span>💌</span>' +
                 '<span>📶</span>' +
-                '<span>📳</span>' +
                 '<span>🔋</span>' +
             '</div>' +
         '</div>';
@@ -4821,13 +5105,23 @@ AUTO PIN MODE:
                         '<span id="geohelper-auto-pin-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>' +
                     '</label>' +
                 '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                    '<div><div style="font-weight:600;font-size:14px;">Safe Mode</div><div style="font-size:11px;color:#6b7280;">Random offset (4.5k+ pts)</div></div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+                    '<div><div style="font-weight:600;font-size:14px;">Safe Mode</div><div style="font-size:11px;color:#6b7280;">Bounded random jitter anti-water</div></div>' +
                     '<label style="position:relative;display:inline-block;width:22px;height:22px;">' +
                         '<input type="checkbox" id="geohelper-safe-mode"' + (state.features?.safeMode ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">' +
                         '<span id="geohelper-safe-mode-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2b313b;border:2px solid #465062;transition:.2s;border-radius:50%;"></span>' +
                         '<span id="geohelper-safe-mode-dot" style="position:absolute;height:10px;width:10px;left:50%;top:50%;transform:translate(-50%,-50%);background-color:#f8fafc;transition:.2s;border-radius:50%;opacity:0;"></span>' +
                     '</label>' +
+                '</div>' +
+                '<div id="geohelper-jitter-controls-box" style="background:#333333;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:10px;max-height:140px;overflow:hidden;display:block;">' +
+                    '<div id="geohelper-jitter-label" style="font-size:12px;color:#374151;font-weight:700;margin-bottom:10px;">Random Limits: 0 - ' + Number(state.jitterDistance || CONFIG.DEFAULTS.JITTER_DISTANCE).toLocaleString('en-US') + ' ' + Security.escapeHtml(state.jitterUnit || CONFIG.DEFAULTS.JITTER_UNIT) + '</div>' +
+                    '<div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">' +
+                        '<input type="range" id="geohelper-jitter-range" min="0" max="10000" step="' + ((state.jitterUnit || CONFIG.DEFAULTS.JITTER_UNIT) === 'km' ? '5' : '50') + '" value="' + Number(state.jitterDistance || CONFIG.DEFAULTS.JITTER_DISTANCE) + '" style="width:100%;cursor:pointer;accent-color:#1a73e8;">' +
+                        '<select id="geohelper-jitter-unit" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:10px;background:#333333;font-size:12px;font-weight:700;color:#111827;">' +
+                            '<option value="m"' + ((state.jitterUnit || CONFIG.DEFAULTS.JITTER_UNIT) === 'm' ? ' selected' : '') + '>(m)</option>' +
+                            '<option value="km"' + ((state.jitterUnit || CONFIG.DEFAULTS.JITTER_UNIT) === 'km' ? ' selected' : '') + '>(km)</option>' +
+                        '</select>' +
+                    '</div>' +
                 '</div>' +
             '</div>' +
             '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;">' +
